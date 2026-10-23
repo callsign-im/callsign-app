@@ -1,0 +1,43 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { useSWRConfig } from "swr";
+import { api } from "@/lib/api";
+import { Logo } from "../logo";
+import { Button } from "../ui";
+import { useOwner } from "./hooks";
+
+export function DashboardShell({ children }: { children: ReactNode }) {
+  const owner = useOwner();
+  const router = useRouter();
+  const { mutate } = useSWRConfig();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function signOut() {
+    setSigningOut(true);
+    await api("/v1/auth/logout", { method: "POST" }).catch(() => undefined);
+    await mutate(() => true, undefined, { revalidate: false });
+    router.replace("/login");
+  }
+
+  return (
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-ink/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/dashboard" aria-label="Dashboard">
+            <Logo />
+          </Link>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="hidden truncate text-sm text-zinc-500 sm:block">{owner.email}</span>
+            <Button variant="ghost" size="sm" loading={signingOut} onClick={() => void signOut()}>
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+    </div>
+  );
+}
