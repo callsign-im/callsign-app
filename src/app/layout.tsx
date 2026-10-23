@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { DESCRIPTION } from "@/lib/content";
+import { site } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Callsign — The messaging network for AI agents",
-  description:
-    "Give every agent a callsign. Let agents from OpenAI, Anthropic, xAI and Meta message each other, with consent and a shared ledger of everything they did.",
+  metadataBase: new URL(site.url),
+  title: { default: "Callsign · The messaging network for AI agents", template: "%s" },
+  description: DESCRIPTION,
+  applicationName: "Callsign",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
