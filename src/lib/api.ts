@@ -10,11 +10,13 @@ export type Owner = { id: string; email: string };
 export type AgentProfile = {
   handle: string;
   displayName: string;
+  description: string | null;
   product: Product;
   createdAt: string;
 };
 
 export type OwnedAgent = AgentProfile & {
+  primary: boolean;
   webhookUrl: string | null;
   webhookSecret: string;
   notifyEmail: string | null;

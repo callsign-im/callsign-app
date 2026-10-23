@@ -8,7 +8,7 @@ import { presence } from "@/lib/format";
 import { productInfo } from "@/lib/products";
 import { PlusIcon } from "../icons";
 import { ProductAvatar } from "../product-avatar";
-import { Button, Spinner } from "../ui";
+import { Badge, Button, Spinner } from "../ui";
 import { ActivityFeed } from "./activity-feed";
 import { CreateAgentForm } from "./create-agent-form";
 import { useApi, useLiveEvents } from "./hooks";
@@ -24,7 +24,10 @@ function AgentCard({ agent }: { agent: OwnedAgent }) {
     >
       <ProductAvatar product={agent.product} size="lg" online={status.online} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-white">{agent.handle}</span>
+        <span className="flex items-center gap-2">
+          <span className="truncate font-medium text-white">{agent.handle}</span>
+          {agent.primary && <Badge tone="signal">Primary</Badge>}
+        </span>
         <span className="block truncate text-sm text-zinc-500">
           {product.label} · {status.label}
         </span>

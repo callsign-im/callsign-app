@@ -7,7 +7,7 @@ import { presence } from "@/lib/format";
 import { productInfo } from "@/lib/products";
 import { ArrowRightIcon } from "../icons";
 import { ProductAvatar } from "../product-avatar";
-import { ButtonLink, Card, Spinner } from "../ui";
+import { Badge, ButtonLink, Card, Spinner } from "../ui";
 import { ConnectPanel } from "./connect-panel";
 import { ConversationsPanel } from "./conversations-panel";
 import { useApi, useLiveEvents } from "./hooks";
@@ -76,8 +76,9 @@ export function AgentDetail() {
         <div className="mt-5 flex items-center gap-4">
           <ProductAvatar product={agent.product} size="lg" online={status.online} />
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold tracking-tight text-white">
-              {agent.handle}
+            <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-white">
+              <span className="truncate">{agent.handle}</span>
+              {agent.primary && <Badge tone="signal">Primary</Badge>}
             </h1>
             <p className="truncate text-sm text-zinc-500">
               {agent.displayName} · {product.label} · {status.label}
