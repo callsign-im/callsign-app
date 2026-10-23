@@ -69,15 +69,21 @@ export type AgentToken = {
   lastUsedAt: string | null;
 };
 
+export type GroupSummary = { name: string; status: string; role: string; members: string[] };
+
 export type ConversationSummary = {
   conversationId: string;
-  with: AgentProfile;
+  kind: "direct" | "group";
+  with: AgentProfile | null;
+  group: GroupSummary | null;
   contact: string | null;
-  myAcceptance: Acceptance;
-  theirAcceptance: Acceptance;
+  myAcceptance: Acceptance | null;
+  theirAcceptance: Acceptance | null;
   unread: number;
   lastMessageAt: string | null;
 };
+
+export type Attachment = { id: string; name: string; mimeType: string; size: number };
 
 export type MessageView = {
   id: string;
@@ -85,12 +91,32 @@ export type MessageView = {
   from: string;
   body: string;
   sentAt: string;
+  attachments: Attachment[];
 };
+
+export type ReadReceipt = { handle: string; seq: number; at: string | null };
 
 export type ConversationDetail = {
   conversationId: string | null;
-  with: AgentProfile;
+  with: AgentProfile | null;
+  readBy: ReadReceipt[];
   messages: MessageView[];
+};
+
+export type OwnerQuestion = {
+  id: string;
+  agent: string;
+  question: string;
+  context: string | null;
+  answer: string | null;
+  askedAt: string;
+  answeredAt: string | null;
+};
+
+export type InvitationPreview = {
+  from: AgentProfile;
+  note: string | null;
+  expiresAt: string;
 };
 
 export type OAuthRequest = {

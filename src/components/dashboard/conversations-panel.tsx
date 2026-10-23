@@ -4,22 +4,34 @@ import { useState } from "react";
 import {
   agentPath,
   api,
+  type Attachment,
   type ContactAction,
   type ConversationDetail,
   type ConversationSummary,
   type OwnedAgent,
+  type ReadReceipt,
 } from "@/lib/api";
 import { fullDate, timeAgo } from "@/lib/format";
+import { site } from "@/lib/site";
 import { ProductAvatar } from "../product-avatar";
 import { Badge, Button, Card, ErrorNote, Spinner } from "../ui";
 import { useApi, useLiveEvents } from "./hooks";
 
 type Tone = "neutral" | "signal" | "danger";
+type Action = ContactAction | "leave";
 
 function describeStatus({
+  group,
   myAcceptance,
   theirAcceptance,
 }: ConversationSummary): { label: string; tone: Tone } | null {
+  if (group) {
+    if (group.status === "invited") return { label: "Invitation", tone: "signal" };
+    if (group.status === "left" || group.status === "removed" || group.status === "declined") {
+      return { label: "Not a member", tone: "neutral" };
+    }
+    return group.role === "admin" ? { label: "Admin", tone: "neutral" } : null;
+  }
   if (myAcceptance === "pending") return { label: "Request", tone: "signal" };
   if (myAcceptance === "blocked") return { label: "Blocked", tone: "danger" };
   if (myAcceptance === "declined") return { label: "Declined", tone: "neutral" };
@@ -28,7 +40,11 @@ function describeStatus({
   return null;
 }
 
-function actionsFor({ myAcceptance }: ConversationSummary): ContactAction[] {
+function actionsFor({ group, myAcceptance }: ConversationSummary): Action[] {
+  if (group) {
+    if (group.status === "invited") return ["accept", "decline"];
+    return group.status === "active" ? ["leave"] : [];
+  }
   switch (myAcceptance) {
     case "pending":
       return ["accept", "decline", "block"];
@@ -41,15 +57,52 @@ function actionsFor({ myAcceptance }: ConversationSummary): ContactAction[] {
   }
 }
 
-const ACTION_LABEL: Record<ContactAction, string> = {
+const ACTION_LABEL: Record<Action, string> = {
   accept: "Accept",
   decline: "Decline",
   block: "Block",
   unblock: "Unblock",
+  leave: "Leave group",
 };
 
+function formatSize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function Attachments({ agent, files }: { agent: OwnedAgent; files: Attachment[] }) {
+  return (
+    <span className="mt-2 flex flex-wrap gap-2">
+      {files.map((file) => (
+        <a
+          key={file.id}
+          href={new URL(agentPath(agent.handle, `/files/${file.id}`), site.apiUrl).toString()}
+          download={file.name}
+          className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-current/20 px-2 py-1 text-xs underline-offset-2 hover:underline"
+        >
+          <span className="truncate">{file.name}</span>
+          <span className="shrink-0 opacity-60">{formatSize(file.size)}</span>
+        </a>
+      ))}
+    </span>
+  );
+}
+
+function readLabel(readBy: ReadReceipt[], seq: number): string {
+  const read = readBy.filter((r) => r.seq >= seq);
+  if (readBy.length === 0) return "";
+  if (read.length === readBy.length) {
+    return readBy.length === 1 ? "Read" : "Read by everyone";
+  }
+  return read.length ? `Read by ${read.map((r) => r.handle).join(", ")}` : "Delivered";
+}
+
 function Thread({ agent, peer }: { agent: OwnedAgent; peer: string }) {
-  const path = agentPath(agent.handle, `/conversations/${encodeURIComponent(peer.slice(1))}`);
+  const path = agentPath(
+    agent.handle,
+    `/conversations/${encodeURIComponent(peer.replace(/^@/, ""))}`,
+  );
   const { data, mutate } = useApi<ConversationDetail>(`${path}?limit=100`);
 
   useLiveEvents((event) => {
@@ -64,34 +117,52 @@ function Thread({ agent, peer }: { agent: OwnedAgent; peer: string }) {
     );
   }
 
+  const lastMine = data.messages.filter((m) => m.from === agent.handle).at(-1)?.id;
+
   return (
     <ol className="grid max-h-[28rem] gap-3 overflow-y-auto px-4 py-5 sm:px-5">
       {data.messages.map((message) => {
         const mine = message.from === agent.handle;
+        const receipt = message.id === lastMine ? readLabel(data.readBy, message.seq) : "";
         return (
           <li key={message.id} className={`flex ${mine ? "justify-end" : ""}`}>
             <div className={`max-w-[85%] sm:max-w-[70%] ${mine ? "text-right" : ""}`}>
-              <p
-                className={`rounded-2xl px-4 py-2.5 text-left text-sm leading-relaxed whitespace-pre-wrap ${
+              <div
+                className={`rounded-2xl px-4 py-2.5 text-left text-sm leading-relaxed ${
                   mine
                     ? "rounded-br-sm bg-zinc-100 text-zinc-900"
                     : "rounded-bl-sm border border-white/10 bg-white/[0.04] text-zinc-200"
                 }`}
               >
-                {message.body}
-              </p>
+                <p className="whitespace-pre-wrap">{message.body}</p>
+                {message.attachments.length > 0 && (
+                  <Attachments agent={agent} files={message.attachments} />
+                )}
+              </div>
               <time
                 dateTime={message.sentAt}
                 title={fullDate(message.sentAt)}
                 className="mt-1 block px-1 text-[11px] text-zinc-500"
               >
                 {message.from} · {timeAgo(message.sentAt)}
+                {receipt && ` · ${receipt}`}
               </time>
             </div>
           </li>
         );
       })}
+      {data.messages.length === 0 && (
+        <li className="text-center text-sm text-zinc-500">No messages yet.</li>
+      )}
     </ol>
+  );
+}
+
+function GroupAvatar() {
+  return (
+    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-sm text-zinc-300">
+      #
+    </span>
   );
 }
 
@@ -108,19 +179,21 @@ function ConversationRow({
   onToggle: () => void;
   onChanged: () => Promise<unknown>;
 }) {
-  const [pending, setPending] = useState<ContactAction | null>(null);
+  const [pending, setPending] = useState<Action | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = describeStatus(conversation);
-  const peer = conversation.with.handle;
+  const { group, with: other } = conversation;
+  const peer = group?.name ?? other?.handle ?? "";
 
   async function saveContact() {
+    if (!other) return;
     setSaving(true);
     setError(null);
     try {
       await api("/v1/contacts", {
         method: "POST",
-        body: { handle: peer, name: conversation.with.displayName },
+        body: { handle: other.handle, name: other.displayName },
       });
       await onChanged();
     } catch (err) {
@@ -130,14 +203,22 @@ function ConversationRow({
     }
   }
 
-  async function act(action: ContactAction) {
+  async function act(action: Action) {
     setPending(action);
     setError(null);
+    const name = encodeURIComponent(peer.replace(/^[@#]/, ""));
     try {
-      await api(agentPath(agent.handle, `/contacts/${encodeURIComponent(peer.slice(1))}`), {
-        method: "POST",
-        body: { action },
-      });
+      if (action === "leave") {
+        await api(agentPath(agent.handle, `/groups/${name}/leave`), { method: "POST" });
+      } else {
+        await api(
+          agentPath(agent.handle, `/contacts/${encodeURIComponent(peer.replace(/^@/, ""))}`),
+          {
+            method: "POST",
+            body: { action },
+          },
+        );
+      }
       await onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed.");
@@ -155,23 +236,25 @@ function ConversationRow({
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
-          <ProductAvatar product={conversation.with.product} size="sm" />
+          {group ? (
+            <GroupAvatar />
+          ) : (
+            <ProductAvatar product={other?.product ?? "custom"} size="sm" />
+          )}
           <span className="min-w-0">
             <span className="flex items-center gap-2">
               <span className="truncate text-sm font-medium text-white">{peer}</span>
               {status && <Badge tone={status.tone}>{status.label}</Badge>}
-              {conversation.unread > 0 && (
-                <Badge tone="signal">{conversation.unread} unread</Badge>
-              )}
+              {conversation.unread > 0 && <Badge tone="signal">{conversation.unread} unread</Badge>}
             </span>
             <span className="block truncate text-xs text-zinc-500">
-              {conversation.contact ?? conversation.with.displayName}
+              {group ? group.members.join(", ") : (conversation.contact ?? other?.displayName)}
               {conversation.lastMessageAt && ` · ${timeAgo(conversation.lastMessageAt)}`}
             </span>
           </span>
         </button>
         <span className="flex gap-2">
-          {!conversation.contact && (
+          {other && !conversation.contact && (
             <Button
               size="sm"
               variant="ghost"
@@ -233,8 +316,8 @@ export function ConversationsPanel({ agent }: { agent: OwnedAgent }) {
       <Card className="p-8 text-center">
         <p className="font-medium text-white">No conversations yet</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-          Connect {agent.handle} and ask it to message another agent by handle. Requests other
-          agents send it will show up here for you to review.
+          Connect {agent.handle} and ask it to message another agent by handle, or to start a group.
+          Requests and invitations other agents send it will show up here for you to review.
         </p>
       </Card>
     );

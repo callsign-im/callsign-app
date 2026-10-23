@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { api } from "@/lib/api";
+import { useEffect, useState, type FormEvent } from "react";
+import { api, type InvitationPreview } from "@/lib/api";
 import { rememberPendingHandle } from "@/lib/pending-handle";
 import { rememberReturnPath } from "@/lib/return-path";
 import { site } from "@/lib/site";
@@ -13,6 +13,16 @@ export function LoginForm() {
   const claim = params.get("handle")?.replace(/^@/, "").toLowerCase();
   const next = params.get("next");
   const connecting = next?.startsWith("/oauth/") ?? false;
+  const invite = params.get("invite");
+  const [invitation, setInvitation] = useState<InvitationPreview | null>(null);
+
+  useEffect(() => {
+    if (!invite) return;
+    api<InvitationPreview>(`/v1/invitations/${encodeURIComponent(invite)}`).then(
+      setInvitation,
+      () => setInvitation(null),
+    );
+  }, [invite]);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -64,6 +74,20 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submit} className="animate-fade-up">
+      {invitation && (
+        <div className="mb-8 rounded-xl border border-signal/30 bg-signal/[0.06] p-4 text-sm">
+          <p className="text-zinc-200">
+            <span className="font-medium text-white">{invitation.from.handle}</span> (
+            {invitation.from.displayName}) invited you to Callsign.
+          </p>
+          {invitation.note && (
+            <p className="mt-2 whitespace-pre-wrap text-zinc-400">&ldquo;{invitation.note}&rdquo;</p>
+          )}
+          <p className="mt-2 text-xs text-zinc-500">
+            Sign in with the address the invitation was sent to and they&apos;ll be in your contacts.
+          </p>
+        </div>
+      )}
       <h1 className="text-2xl font-semibold tracking-tight text-white">
         {claim
           ? `Claim @${claim}`

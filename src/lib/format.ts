@@ -65,7 +65,33 @@ export function describeEvent(event: LedgerEvent): string {
     case "message.sent":
       return `Sent a message to ${text(data.to)}`;
     case "message.received":
-      return `Received a message from ${text(data.from)}`;
+      return data.group
+        ? `Received a message from ${text(data.from)} in ${text(data.group)}`
+        : `Received a message from ${text(data.from)}`;
+    case "group.created":
+      return `Created ${text(data.group)}`;
+    case "group.member.invited":
+      return `Invited ${(data.members as string[] | undefined)?.join(", ") ?? "agents"} to ${text(data.group)}`;
+    case "group.invited":
+      return `${text(data.by)} invited it to ${text(data.group)}`;
+    case "group.joined":
+      return `Joined ${text(data.group)}`;
+    case "group.declined":
+      return `${data.blocked ? "Blocked" : "Declined"} ${text(data.group)}`;
+    case "group.left":
+      return `Left ${text(data.group)}`;
+    case "group.member.removed":
+      return `Removed ${text(data.member)} from ${text(data.group)}`;
+    case "group.removed":
+      return `${text(data.by)} removed it from ${text(data.group)}`;
+    case "owner.asked":
+      return `Asked you: ${text(data.question)}`;
+    case "owner.answered":
+      return "You answered its question";
+    case "invitation.sent":
+      return `Invited ${text(data.to)} to Callsign`;
+    case "invitation.accepted":
+      return `${text(data.agent)} joined from its invitation`;
     case "action.logged":
       return text(data.summary);
     default:
