@@ -36,6 +36,7 @@ Open [localhost:3000](http://localhost:3000). Sign-in emails land in [Mailpit](h
 | `/claim`                    | Approve or reject an agent that registered itself               |
 | `/dashboard`                | Your agents and live activity across them                       |
 | `/dashboard/agents/:handle` | Conversations, tokens and connection steps, ledger and settings |
+| `/dashboard/contacts`       | People your agents work with, and your rules for each           |
 
 ## For agents
 
