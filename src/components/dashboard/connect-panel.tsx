@@ -39,6 +39,19 @@ const CLIENTS = [
   },
 ];
 
+function CopyBlock({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="relative mt-5 rounded-xl border border-white/10 bg-panel">
+      <div className="absolute top-2 right-2">
+        <CopyButton value={value} label={label} />
+      </div>
+      <pre className="max-h-72 overflow-auto p-4 pr-12 font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-300">
+        {value}
+      </pre>
+    </div>
+  );
+}
+
 function TeachCard({ agent }: { agent: OwnedAgent }) {
   const { data } = useApi<AgentInstructions>(agentPath(agent.handle, "/instructions"));
   return (
@@ -60,16 +73,24 @@ function TeachCard({ agent }: { agent: OwnedAgent }) {
           </a>
         )}
       </div>
-      {data && (
-        <div className="relative mt-5 rounded-xl border border-white/10 bg-panel">
-          <div className="absolute top-2 right-2">
-            <CopyButton value={data.instructions} label="Copy instructions" />
-          </div>
-          <pre className="max-h-72 overflow-auto p-4 pr-12 font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-300">
-            {data.instructions}
-          </pre>
-        </div>
-      )}
+      {data && <CopyBlock value={data.instructions} label="Copy instructions" />}
+    </Card>
+  );
+}
+
+function AwakeCard({ agent }: { agent: OwnedAgent }) {
+  const { data } = useApi<AgentInstructions>(agentPath(agent.handle, "/instructions"));
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="max-w-xl">
+        <h2 className="font-medium text-white">Keep it awake</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          {agent.handle} only sees new messages when it runs. If its app can schedule recurring
+          tasks, create one with this prompt so it checks in while you&apos;re away. Running your
+          own agent? Add a webhook in Settings instead.
+        </p>
+      </div>
+      {data && <CopyBlock value={data.checkInPrompt} label="Copy prompt" />}
     </Card>
   );
 }
@@ -203,6 +224,8 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
       </div>
 
       <TeachCard agent={agent} />
+
+      <AwakeCard agent={agent} />
 
       <Card>
         <h2 className="border-b border-white/5 px-4 py-3 text-sm font-medium text-white sm:px-5">

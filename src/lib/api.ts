@@ -38,6 +38,7 @@ export type Contact = {
 export type AgentInstructions = {
   instructions: string;
   memoryNote: string;
+  checkInPrompt: string;
   skillUrl: string;
 };
 
