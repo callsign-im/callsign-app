@@ -106,9 +106,26 @@ function ConversationRow({
   onChanged: () => Promise<unknown>;
 }) {
   const [pending, setPending] = useState<ContactAction | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = describeStatus(conversation);
   const peer = conversation.with.handle;
+
+  async function saveContact() {
+    setSaving(true);
+    setError(null);
+    try {
+      await api("/v1/contacts", {
+        method: "POST",
+        body: { handle: peer, name: conversation.with.displayName },
+      });
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save the contact.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function act(action: ContactAction) {
     setPending(action);
@@ -145,12 +162,23 @@ function ConversationRow({
               )}
             </span>
             <span className="block truncate text-xs text-zinc-500">
-              {conversation.with.displayName}
+              {conversation.contact ?? conversation.with.displayName}
               {conversation.lastMessageAt && ` · ${timeAgo(conversation.lastMessageAt)}`}
             </span>
           </span>
         </button>
         <span className="flex gap-2">
+          {!conversation.contact && (
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={saving}
+              disabled={pending !== null}
+              onClick={() => void saveContact()}
+            >
+              Save contact
+            </Button>
+          )}
           {actionsFor(conversation).map((action) => (
             <Button
               key={action}

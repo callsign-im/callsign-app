@@ -18,9 +18,25 @@ export type OwnedAgent = AgentProfile & {
   webhookUrl: string | null;
   webhookSecret: string;
   notifyEmail: string | null;
+  discoverable: boolean;
+  rules: string | null;
   lastSeenAt: string | null;
   ledgerEvents: number;
   ledgerHead: string | null;
+};
+
+export type Contact = {
+  id: string;
+  name: string;
+  notes: string | null;
+  rules: string | null;
+  agent: AgentProfile;
+};
+
+export type AgentInstructions = {
+  instructions: string;
+  memoryNote: string;
+  skillUrl: string;
 };
 
 export type PendingRegistration = {
@@ -44,6 +60,7 @@ export type AgentToken = {
 export type ConversationSummary = {
   conversationId: string;
   with: AgentProfile;
+  contact: string | null;
   status: { me: MemberStatus; them: MemberStatus };
   unread: number;
   lastMessageAt: string | null;

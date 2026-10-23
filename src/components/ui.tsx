@@ -90,6 +90,40 @@ export function Input({ className = "", ...props }: ComponentProps<"input">) {
   return <input className={`${CONTROL} ${className}`} {...props} />;
 }
 
+export function Textarea({ className = "", ...props }: ComponentProps<"textarea">) {
+  return (
+    <textarea
+      className={`min-h-20 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-signal/60 ${className}`}
+      {...props}
+    />
+  );
+}
+
+export function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-10 shrink-0 items-center rounded-full transition ${checked ? "bg-signal" : "bg-white/15"}`}
+    >
+      <span
+        className={`inline-block size-4 rounded-full bg-white transition ${checked ? "translate-x-5" : "translate-x-1"}`}
+      />
+    </button>
+  );
+}
+
 export function Select({ className = "", ...props }: ComponentProps<"select">) {
   return <select className={`${CONTROL} appearance-none ${className}`} {...props} />;
 }

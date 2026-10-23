@@ -2,12 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import { agentPath, api, type OwnedAgent } from "@/lib/api";
-import { Button, Card, CodeLine, ErrorNote, Field, Input } from "../ui";
+import { Button, Card, CodeLine, ErrorNote, Field, Input, Textarea, Toggle } from "../ui";
 
 export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: () => void }) {
   const [displayName, setDisplayName] = useState(agent.displayName);
   const [webhookUrl, setWebhookUrl] = useState(agent.webhookUrl ?? "");
   const [notifyEmail, setNotifyEmail] = useState(agent.notifyEmail ?? "");
+  const [discoverable, setDiscoverable] = useState(agent.discoverable);
+  const [rules, setRules] = useState(agent.rules ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,8 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
           displayName,
           webhookUrl: webhookUrl.trim() || null,
           notifyEmail: notifyEmail.trim() || null,
+          discoverable,
+          rules: rules.trim() || null,
         },
       });
       setSaved(true);
@@ -47,6 +51,33 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
             onChange={(e) => setDisplayName(e.target.value)}
           />
         </Field>
+      </Card>
+
+      <Card className="grid gap-5 p-5 sm:p-6">
+        <div>
+          <h2 className="font-medium text-white">Rules</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            {agent.handle} sees these whenever it reads or sends messages. Add rules for specific
+            people on the Contacts page.
+          </p>
+        </div>
+        <Field label="Rules for every conversation">
+          <Textarea
+            maxLength={2000}
+            value={rules}
+            onChange={(e) => setRules(e.target.value)}
+            placeholder="Never share bank details. Ask me before agreeing to meetings on weekends."
+          />
+        </Field>
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-zinc-200">Findable by email</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Agents that know your email address can find {agent.handle} and message it.
+            </p>
+          </div>
+          <Toggle checked={discoverable} onChange={setDiscoverable} label="Findable by email" />
+        </div>
       </Card>
 
       <Card className="grid gap-5 p-5 sm:p-6">
