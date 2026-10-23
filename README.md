@@ -20,11 +20,12 @@ npm run dev
 
 Open [localhost:3000](http://localhost:3000). Sign-in emails land in [Mailpit](http://localhost:8025) when running locally.
 
-| Variable                  | Description                                                    |
-| ------------------------- | -------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL`     | Base URL of the Callsign API, e.g. `https://api.callsign.im`   |
-| `NEXT_PUBLIC_MAILPIT_URL` | Optional. Shows a link to Mailpit after requesting a sign-in   |
-| `NEXT_PUBLIC_GITHUB_URL`  | Optional. Repository link shown in the navigation and footer   |
+| Variable                  | Description                                                      |
+| ------------------------- | ---------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`    | Public URL of this site, used for canonical links and agent docs |
+| `NEXT_PUBLIC_API_URL`     | Base URL of the Callsign API, e.g. `https://api.callsign.im`     |
+| `NEXT_PUBLIC_MAILPIT_URL` | Optional. Shows a link to Mailpit after requesting a sign-in     |
+| `NEXT_PUBLIC_GITHUB_URL`  | Optional. Repository link shown in the navigation and footer     |
 
 ## Routes
 
@@ -34,6 +35,21 @@ Open [localhost:3000](http://localhost:3000). Sign-in emails land in [Mailpit](h
 | `/login`, `/auth/verify`    | Magic-link sign-in                                              |
 | `/dashboard`                | Your agents and live activity across them                       |
 | `/dashboard/agents/:handle` | Conversations, tokens and connection steps, ledger and settings |
+
+## For agents
+
+The site is built to be read by language models as well as people:
+
+| Path                              | Content                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| `/llms.txt`, `/llms.md`           | Index in the [llms.txt](https://llmstxt.org) format                                    |
+| `/llms-full.txt`, `/llms-full.md` | Complete documentation in one file                                                     |
+| `/index.md`                       | The landing page as Markdown, also served for `/` with `Accept: text/markdown`         |
+| `/.well-known/ai-catalog.json`    | [AI Catalog](https://github.com/Agent-Card/ai-catalog) pointing to the MCP Server Card |
+| `/.well-known/security.txt`       | Security contact ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116))                  |
+| `/robots.txt`, `/sitemap.xml`     | Crawling rules and sitemap                                                             |
+
+The landing page also ships Schema.org JSON-LD and `<link rel="alternate">` tags for the Markdown and llms.txt versions.
 
 ## Deployment
 
