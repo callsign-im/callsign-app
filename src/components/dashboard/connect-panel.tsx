@@ -9,35 +9,60 @@ import {
   type OwnedAgent,
 } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
-import { Button, Card, CodeLine, CopyButton, ErrorNote, Input } from "../ui";
+import { Badge, Button, Card, CodeLine, CopyButton, ErrorNote, Input } from "../ui";
 import { useApi } from "./hooks";
 
-const CLIENTS = [
+type Client = {
+  name: string;
+  command?: (mcpUrl: string) => string;
+  steps: string[];
+};
+
+const CLIENTS: Client[] = [
+  {
+    name: "Claude Code",
+    command: (mcpUrl) => `claude mcp add --transport http --scope user callsign ${mcpUrl}`,
+    steps: [
+      "Run the command above in a terminal",
+      "In Claude Code, run /mcp, pick callsign and choose Authenticate",
+      "Sessions that were already open need /mcp before the tools appear",
+    ],
+  },
   {
     name: "Claude",
     steps: [
       "Settings → Connectors → Add custom connector",
-      "Paste the connector URL",
-      "Enable it in a chat and ask Claude to run whoami",
+      "Paste the server URL and connect",
+      "Sign in here when Claude asks, then ask it to run whoami",
     ],
   },
   {
     name: "ChatGPT",
     steps: [
       "Settings → Connectors → Advanced → enable Developer Mode",
-      "Create a connector with the URL and no authentication",
-      "Enable it in a chat and ask ChatGPT to run whoami",
-    ],
-  },
-  {
-    name: "Other MCP clients",
-    steps: [
-      "Use the server URL with header auth",
-      "Send Authorization: Bearer with your token",
-      "No MCP? Use the REST API under /v1/agent",
+      "Create a connector with the server URL and OAuth",
+      "Sign in here when ChatGPT asks, then ask it to run whoami",
     ],
   },
 ];
+
+function ClientCard({ client, mcpUrl }: { client: Client; mcpUrl: string }) {
+  return (
+    <Card className="flex flex-col p-5">
+      <h3 className="text-sm font-medium text-white">{client.name}</h3>
+      {client.command && (
+        <div className="mt-3">
+          <CodeLine value={client.command(mcpUrl)} />
+        </div>
+      )}
+      <ol className="mt-3 grid list-decimal gap-1.5 pl-4 text-sm text-zinc-400 marker:text-zinc-600">
+        {client.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
 
 function CopyBlock({ value, label }: { value: string; label: string }) {
   return (
@@ -60,8 +85,9 @@ function TeachCard({ agent }: { agent: OwnedAgent }) {
         <div className="max-w-xl">
           <h2 className="font-medium text-white">Teach it to use Callsign</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Connecting gives {agent.handle} the tools. Paste this into its custom instructions or
-            memory so it reaches for Callsign instead of email.
+            Connecting gives {agent.handle} the tools. Paste this into its custom instructions so it
+            reaches for Callsign instead of email. Callsign never asks the agent to change its own
+            memory; that comes from you.
           </p>
         </div>
         {data && (
@@ -74,6 +100,14 @@ function TeachCard({ agent }: { agent: OwnedAgent }) {
         )}
       </div>
       {data && <CopyBlock value={data.instructions} label="Copy instructions" />}
+      {data && (
+        <>
+          <p className="mt-6 text-sm text-zinc-500">
+            If it has a memory, tell it to save this note:
+          </p>
+          <CopyBlock value={data.memoryNote} label="Copy memory note" />
+        </>
+      )}
     </Card>
   );
 }
@@ -98,11 +132,17 @@ function AwakeCard({ agent }: { agent: OwnedAgent }) {
 function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Promise<void> }) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const action = token.kind === "oauth" ? "Disconnect" : "Revoke";
   return (
     <li className="flex items-center gap-4 px-4 py-3 sm:px-5">
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm text-zinc-100">{token.name}</span>
-        <span className="font-mono text-xs text-zinc-500">{token.prefix}…</span>
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm text-zinc-100">{token.name}</span>
+          {token.kind === "oauth" && <Badge>Signed in</Badge>}
+        </span>
+        {token.kind === "token" && (
+          <span className="font-mono text-xs text-zinc-500">{token.prefix}…</span>
+        )}
       </span>
       <span className="hidden text-right text-xs text-zinc-500 sm:block">
         Created {timeAgo(token.createdAt)}
@@ -120,7 +160,7 @@ function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Prom
               void onRevoke().finally(() => setRevoking(false));
             }}
           >
-            Revoke
+            {action}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
             Keep
@@ -128,7 +168,7 @@ function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Prom
         </span>
       ) : (
         <Button variant="secondary" size="sm" onClick={() => setConfirming(true)}>
-          Revoke
+          {action}
         </Button>
       )}
     </li>
@@ -170,15 +210,50 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
   return (
     <div className="grid gap-6">
       <Card className="p-5 sm:p-6">
-        <h2 className="font-medium text-white">Create a token</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          One token per place you connect {agent.handle}, so you can revoke them independently.
+        <h2 className="font-medium text-white">Connect an app</h2>
+        <p className="mt-1 max-w-xl text-sm text-zinc-500">
+          Add this server URL to any app that supports remote MCP servers. It opens Callsign in your
+          browser, where you choose {agent.handle} and approve. No token to copy or paste.
+        </p>
+        <div className="mt-5">
+          <CodeLine value={mcpUrl} />
+        </div>
+      </Card>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {CLIENTS.map((client) => (
+          <ClientCard key={client.name} client={client} mcpUrl={mcpUrl} />
+        ))}
+      </div>
+
+      <Card>
+        <h2 className="border-b border-white/5 px-4 py-3 text-sm font-medium text-white sm:px-5">
+          Connections
+        </h2>
+        {data?.tokens.length ? (
+          <ul className="divide-y divide-white/5">
+            {data.tokens.map((token) => (
+              <TokenRow key={token.id} token={token} onRevoke={() => revoke(token.id)} />
+            ))}
+          </ul>
+        ) : (
+          <p className="px-4 py-5 text-sm text-zinc-500 sm:px-5">
+            {data ? "Nothing is connected yet." : "Loading…"}
+          </p>
+        )}
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <h2 className="font-medium text-white">Use a token instead</h2>
+        <p className="mt-1 max-w-xl text-sm text-zinc-500">
+          For apps without sign-in, scripts and the REST API. Create one token per place you connect{" "}
+          {agent.handle}, so you can revoke them independently.
         </p>
         <form onSubmit={createToken} className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Claude, ChatGPT, my server…"
+            placeholder="Cursor, my server…"
             maxLength={80}
             className="sm:max-w-xs"
           />
@@ -198,51 +273,23 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
               Copy these now. The token won&apos;t be shown again.
             </p>
             <div className="grid gap-1.5">
-              <span className="text-xs text-zinc-400">Connector URL (Claude, ChatGPT)</span>
-              <CodeLine value={`${mcpUrl}/${created}`} secret />
-            </div>
-            <div className="grid gap-1.5">
-              <span className="text-xs text-zinc-400">Server URL and header for other clients</span>
+              <span className="text-xs text-zinc-400">Server URL and header</span>
               <CodeLine value={mcpUrl} />
               <CodeLine value={`Authorization: Bearer ${created}`} secret />
+            </div>
+            <div className="grid gap-1.5">
+              <span className="text-xs text-zinc-400">
+                URL with the token, for apps that only take a URL
+              </span>
+              <CodeLine value={`${mcpUrl}/${created}`} secret />
             </div>
           </div>
         )}
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {CLIENTS.map((client) => (
-          <Card key={client.name} className="p-5">
-            <h3 className="text-sm font-medium text-white">{client.name}</h3>
-            <ol className="mt-3 grid list-decimal gap-1.5 pl-4 text-sm text-zinc-400 marker:text-zinc-600">
-              {client.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-          </Card>
-        ))}
-      </div>
-
       <TeachCard agent={agent} />
 
       <AwakeCard agent={agent} />
-
-      <Card>
-        <h2 className="border-b border-white/5 px-4 py-3 text-sm font-medium text-white sm:px-5">
-          Active tokens
-        </h2>
-        {data?.tokens.length ? (
-          <ul className="divide-y divide-white/5">
-            {data.tokens.map((token) => (
-              <TokenRow key={token.id} token={token} onRevoke={() => revoke(token.id)} />
-            ))}
-          </ul>
-        ) : (
-          <p className="px-4 py-5 text-sm text-zinc-500 sm:px-5">
-            {data ? "No active tokens yet." : "Loading…"}
-          </p>
-        )}
-      </Card>
     </div>
   );
 }

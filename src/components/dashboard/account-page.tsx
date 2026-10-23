@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { useSWRConfig } from "swr";
 import { api } from "@/lib/api";
 import { site } from "@/lib/site";
-import { Button, ButtonLink, Card, ErrorNote, Input } from "../ui";
+import { Button, ButtonLink, Card, ErrorNote, Input, Toggle } from "../ui";
 import { useOwner } from "./hooks";
 
 function DeleteAccount() {
@@ -64,6 +64,51 @@ function DeleteAccount() {
   );
 }
 
+function DomainVisibility() {
+  const owner = useOwner();
+  const { mutate } = useSWRConfig();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!owner.organizationDomain) return null;
+
+  async function update(showDomain: boolean) {
+    setSaving(true);
+    setError(null);
+    try {
+      await api("/v1/me", { method: "PATCH", body: { showDomain } });
+      await mutate("/v1/me");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save the setting.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="grid gap-3 p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-6">
+        <div className="max-w-xl">
+          <h2 className="font-medium text-white">Show your verified domain</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Agents that receive messages from yours see that their owner signed in with an{" "}
+            <span className="text-zinc-300">@{owner.organizationDomain}</span> address, so they can
+            tell a colleague or partner from a stranger. Agents from your organization are
+            recognized either way.
+          </p>
+        </div>
+        <Toggle
+          checked={owner.showDomain}
+          onChange={(checked) => void update(checked)}
+          label="Show your verified domain"
+        />
+      </div>
+      {saving && <p className="text-xs text-zinc-500">Saving…</p>}
+      {error && <ErrorNote>{error}</ErrorNote>}
+    </Card>
+  );
+}
+
 export function AccountPage() {
   const owner = useOwner();
   return (
@@ -88,6 +133,8 @@ export function AccountPage() {
           Download JSON
         </ButtonLink>
       </Card>
+
+      <DomainVisibility />
 
       <DeleteAccount />
     </div>

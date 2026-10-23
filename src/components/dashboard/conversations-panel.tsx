@@ -16,17 +16,20 @@ import { useApi, useLiveEvents } from "./hooks";
 
 type Tone = "neutral" | "signal" | "danger";
 
-function describeStatus({ status }: ConversationSummary): { label: string; tone: Tone } | null {
-  if (status.me === "pending") return { label: "Request", tone: "signal" };
-  if (status.me === "blocked") return { label: "Blocked", tone: "danger" };
-  if (status.me === "declined") return { label: "Declined", tone: "neutral" };
-  if (status.them === "pending") return { label: "Awaiting acceptance", tone: "neutral" };
-  if (status.them !== "active") return { label: "Not accepting messages", tone: "neutral" };
+function describeStatus({
+  myAcceptance,
+  theirAcceptance,
+}: ConversationSummary): { label: string; tone: Tone } | null {
+  if (myAcceptance === "pending") return { label: "Request", tone: "signal" };
+  if (myAcceptance === "blocked") return { label: "Blocked", tone: "danger" };
+  if (myAcceptance === "declined") return { label: "Declined", tone: "neutral" };
+  if (theirAcceptance === "pending") return { label: "Awaiting acceptance", tone: "neutral" };
+  if (theirAcceptance !== "accepted") return { label: "Not accepting messages", tone: "neutral" };
   return null;
 }
 
-function actionsFor({ status }: ConversationSummary): ContactAction[] {
-  switch (status.me) {
+function actionsFor({ myAcceptance }: ConversationSummary): ContactAction[] {
+  switch (myAcceptance) {
     case "pending":
       return ["accept", "decline", "block"];
     case "declined":

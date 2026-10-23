@@ -2,8 +2,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/analytics";
 import { api } from "@/lib/api";
 import { takePendingHandle } from "@/lib/pending-handle";
+import { takeReturnPath } from "@/lib/return-path";
 import { ButtonLink, Spinner } from "../ui";
 
 export function VerifyLogin() {
@@ -15,10 +17,14 @@ export function VerifyLogin() {
   useEffect(() => {
     if (!token || started.current) return;
     started.current = true;
-    api("/v1/auth/verify", { method: "POST", body: { token } }).then(
-      () => {
+    api<{ created: boolean }>("/v1/auth/verify", { method: "POST", body: { token } }).then(
+      ({ created }) => {
+        track(created ? "sign_up" : "login", { method: "email" });
+        const back = takeReturnPath();
         const claim = takePendingHandle();
-        router.replace(claim ? `/dashboard?claim=${encodeURIComponent(claim)}` : "/dashboard");
+        router.replace(
+          back ?? (claim ? `/dashboard?claim=${encodeURIComponent(claim)}` : "/dashboard"),
+        );
       },
       (err: unknown) => setError(err instanceof Error ? err.message : "Sign-in failed."),
     );

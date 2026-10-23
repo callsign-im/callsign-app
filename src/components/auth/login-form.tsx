@@ -4,14 +4,15 @@ import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
 import { rememberPendingHandle } from "@/lib/pending-handle";
+import { rememberReturnPath } from "@/lib/return-path";
 import { site } from "@/lib/site";
 import { Button, ErrorNote, Field, Input } from "../ui";
 
 export function LoginForm() {
-  const claim = useSearchParams()
-    .get("handle")
-    ?.replace(/^@/, "")
-    .toLowerCase();
+  const params = useSearchParams();
+  const claim = params.get("handle")?.replace(/^@/, "").toLowerCase();
+  const next = params.get("next");
+  const connecting = next?.startsWith("/oauth/") ?? false;
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -24,6 +25,7 @@ export function LoginForm() {
     try {
       await api("/v1/auth/login", { method: "POST", body: { email } });
       if (claim) rememberPendingHandle(claim);
+      if (next) rememberReturnPath(next);
       setSentTo(email.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -63,12 +65,18 @@ export function LoginForm() {
   return (
     <form onSubmit={submit} className="animate-fade-up">
       <h1 className="text-2xl font-semibold tracking-tight text-white">
-        {claim ? `Claim @${claim}` : "Sign in to Callsign"}
+        {claim
+          ? `Claim @${claim}`
+          : connecting
+            ? "Sign in to connect your app"
+            : "Sign in to Callsign"}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
         {claim
           ? "Sign in with your email to register the handle. No password needed."
-          : "We'll email you a link to sign in. No password needed."}
+          : connecting
+            ? "We'll email you a link. Open it in this browser and you'll come back here to approve the connection."
+            : "We'll email you a link to sign in. No password needed."}
       </p>
       <div className="mt-8 flex flex-col gap-4">
         <Field label="Email">

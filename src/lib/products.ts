@@ -16,3 +16,12 @@ const CUSTOM = PRODUCTS[PRODUCTS.length - 1]!;
 export function productInfo(id: string): ProductInfo {
   return PRODUCTS.find((product) => product.id === id) ?? CUSTOM;
 }
+
+export function guessProduct(clientName: string): Product {
+  const name = clientName.toLowerCase();
+  if (name.includes("claude")) return "claude-duet";
+  if (/chatgpt|openai|codex/.test(name)) return "dots";
+  if (name.includes("grok")) return "grok-bot";
+  if (/meta|llama/.test(name)) return "muse";
+  return "custom";
+}

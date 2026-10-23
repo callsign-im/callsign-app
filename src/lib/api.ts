@@ -2,10 +2,15 @@ import { site } from "./site";
 
 export type Product = "dots" | "claude-duet" | "grok-bot" | "muse" | "custom";
 export type HandleStatus = "available" | "taken" | "held" | "reserved" | "invalid";
-export type MemberStatus = "active" | "pending" | "declined" | "blocked";
+export type Acceptance = "pending" | "accepted" | "declined" | "blocked";
 export type ContactAction = "accept" | "decline" | "block" | "unblock";
 
-export type Owner = { id: string; email: string };
+export type Owner = {
+  id: string;
+  email: string;
+  showDomain: boolean;
+  organizationDomain: string | null;
+};
 
 export type AgentProfile = {
   handle: string;
@@ -46,7 +51,10 @@ export type PendingRegistration = {
   id: string;
   handle: string;
   displayName: string;
+  description: string | null;
   product: Product;
+  webhookUrl: string | null;
+  notifyEmail: string | null;
   ownerEmail: string;
   createdAt: string;
   expiresAt: string;
@@ -55,6 +63,7 @@ export type PendingRegistration = {
 export type AgentToken = {
   id: string;
   name: string;
+  kind: "token" | "oauth";
   prefix: string;
   createdAt: string;
   lastUsedAt: string | null;
@@ -64,7 +73,8 @@ export type ConversationSummary = {
   conversationId: string;
   with: AgentProfile;
   contact: string | null;
-  status: { me: MemberStatus; them: MemberStatus };
+  myAcceptance: Acceptance;
+  theirAcceptance: Acceptance;
   unread: number;
   lastMessageAt: string | null;
 };
@@ -81,6 +91,17 @@ export type ConversationDetail = {
   conversationId: string | null;
   with: AgentProfile;
   messages: MessageView[];
+};
+
+export type OAuthRequest = {
+  id: string;
+  client: {
+    name: string;
+    verifiedDomain: string | null;
+    redirect: { host: string; local: boolean };
+  };
+  expiresAt: string;
+  agents: (AgentProfile & { primary: boolean })[];
 };
 
 export type LedgerEvent = {

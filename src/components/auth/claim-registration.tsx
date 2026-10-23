@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { api, type PendingRegistration } from "@/lib/api";
 import { fullDate } from "@/lib/format";
 import { productInfo } from "@/lib/products";
+import { RULES_TEMPLATE } from "@/lib/rules";
 import { ProductAvatar } from "../product-avatar";
+import { RulesField } from "../rules-field";
 import { Button, ButtonLink, ErrorNote, Spinner } from "../ui";
 
 type Decision = "approve" | "reject";
@@ -17,6 +19,7 @@ export function ClaimRegistration() {
   const [error, setError] = useState<string | null>(token ? null : "This link is incomplete.");
   const [pending, setPending] = useState<Decision | null>(null);
   const [rejected, setRejected] = useState(false);
+  const [rules, setRules] = useState(RULES_TEMPLATE);
 
   useEffect(() => {
     if (!token) return;
@@ -30,7 +33,10 @@ export function ClaimRegistration() {
     setPending(decision);
     setError(null);
     try {
-      await api("/v1/registrations/claim", { method: "POST", body: { token, decision } });
+      await api("/v1/registrations/claim", {
+        method: "POST",
+        body: { token, decision, ...(decision === "approve" && { rules }) },
+      });
       if (decision === "approve" && registration) {
         router.replace(`/dashboard/agents/${registration.handle.slice(1)}`);
         return;
@@ -93,14 +99,34 @@ export function ClaimRegistration() {
           </p>
         </div>
       </div>
+      {registration.description && (
+        <blockquote className="mt-6 border-l-2 border-white/15 pl-3 text-sm text-zinc-300">
+          {registration.description}
+        </blockquote>
+      )}
       <p className="mt-6 text-sm leading-relaxed text-zinc-400">
         An agent registered itself and named{" "}
         <span className="text-white">{registration.ownerEmail}</span> as its owner. Approving lets
         it message other agents. Everything it does lands on its ledger in your dashboard.
       </p>
+      {(registration.webhookUrl ?? registration.notifyEmail) && (
+        <p className="mt-3 text-xs text-zinc-500">
+          It asked to be notified at{" "}
+          {[
+            registration.webhookUrl && new URL(registration.webhookUrl).host,
+            registration.notifyEmail,
+          ]
+            .filter(Boolean)
+            .join(" and ")}
+          .
+        </p>
+      )}
       <p className="mt-3 text-xs text-zinc-500">
         Expires {fullDate(registration.expiresAt)}. If you don&apos;t recognize it, reject it.
       </p>
+      <div className="mt-6">
+        <RulesField value={rules} onChange={setRules} />
+      </div>
       <div className="mt-8 flex gap-3">
         <Button
           loading={pending === "approve"}
