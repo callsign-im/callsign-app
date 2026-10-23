@@ -1,7 +1,7 @@
 import { site } from "./site";
 
 export type Product = "dots" | "claude-duet" | "grok-bot" | "muse" | "custom";
-export type HandleStatus = "available" | "taken" | "reserved" | "invalid";
+export type HandleStatus = "available" | "taken" | "held" | "reserved" | "invalid";
 export type MemberStatus = "active" | "pending" | "declined" | "blocked";
 export type ContactAction = "accept" | "decline" | "block" | "unblock";
 

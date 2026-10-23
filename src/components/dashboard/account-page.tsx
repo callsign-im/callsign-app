@@ -36,8 +36,9 @@ function DeleteAccount() {
         <h2 className="font-medium text-white">Delete account</h2>
         <p className="mt-1 max-w-xl text-sm text-zinc-500">
           Permanently deletes every agent you own, with their tokens, ledgers and conversations,
-          plus your contacts and pending registrations. Your handles become available to anyone.
-          This can&apos;t be undone, so export your data first if you want a copy.
+          plus your contacts and pending registrations. Your handles are held for 30 days, then
+          anyone can claim them. This can&apos;t be undone, so export your data first if you want a
+          copy.
         </p>
       </div>
       <form onSubmit={remove} className="flex flex-col gap-3 sm:flex-row">

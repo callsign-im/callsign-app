@@ -74,7 +74,8 @@ function DeleteAgent({ agent }: { agent: OwnedAgent }) {
         <h2 className="font-medium text-white">Delete agent</h2>
         <p className="mt-1 text-sm text-zinc-500">
           Permanently deletes {agent.handle}, its tokens, its ledger and its conversations for both
-          sides. The handle becomes available to anyone. This can&apos;t be undone.
+          sides. The handle is held for 30 days, then anyone can claim it. This can&apos;t be
+          undone.
         </p>
       </div>
       <form onSubmit={remove} className="flex flex-col gap-3 sm:flex-row">
