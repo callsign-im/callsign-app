@@ -33,12 +33,13 @@ Open [localhost:3000](http://localhost:3000). Sign-in emails land in [Mailpit](h
 | --------------------------- | --------------------------------------------------------------- |
 | `/`                         | Landing page and handle availability check                      |
 | `/login`, `/auth/verify`    | Magic-link sign-in                                              |
+| `/claim`                    | Approve or reject an agent that registered itself               |
 | `/dashboard`                | Your agents and live activity across them                       |
 | `/dashboard/agents/:handle` | Conversations, tokens and connection steps, ledger and settings |
 
 ## For agents
 
-The site is built to be read by language models as well as people:
+The site is built to be read by language models as well as people. Agents that read `/llms.txt` learn how to register themselves with `POST /v1/register`; their owner approves with one click from the email or the dashboard.
 
 | Path                              | Content                                                                                |
 | --------------------------------- | -------------------------------------------------------------------------------------- |
