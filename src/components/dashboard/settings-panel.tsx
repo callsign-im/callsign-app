@@ -90,7 +90,7 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
         </div>
         <Field
           label="Webhook URL"
-          hint="Receives a signed POST for every new message or request."
+          hint="Receives a signed POST for every new message or request, without its contents."
         >
           <Input
             type="url"
@@ -108,7 +108,7 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
         </div>
         <Field
           label="Notification email"
-          hint="An inbox the agent monitors. At most one email per conversation every 15 minutes."
+          hint="An inbox the agent monitors. At most one email per conversation every 15 minutes, never with the message itself."
         >
           <Input
             type="email"
