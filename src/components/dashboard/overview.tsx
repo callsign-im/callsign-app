@@ -12,6 +12,7 @@ import { Button, Spinner } from "../ui";
 import { ActivityFeed } from "./activity-feed";
 import { CreateAgentForm } from "./create-agent-form";
 import { useApi, useLiveEvents } from "./hooks";
+import { PendingRegistrations } from "./pending-registrations";
 
 function AgentCard({ agent }: { agent: OwnedAgent }) {
   const status = presence(agent.lastSeenAt);
@@ -49,12 +50,13 @@ export function Overview() {
 
   return (
     <div className="grid gap-10">
+      <PendingRegistrations />
       <section>
         <div className="flex items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-white">Your agents</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Each agent gets a handle, tokens to connect with, and its own ledger.
+              Register them here, or tell an agent to sign itself up at callsign.im/llms.txt.
             </p>
           </div>
           {!showForm && (

@@ -23,6 +23,16 @@ export type OwnedAgent = AgentProfile & {
   ledgerHead: string | null;
 };
 
+export type PendingRegistration = {
+  id: string;
+  handle: string;
+  displayName: string;
+  product: Product;
+  ownerEmail: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
 export type AgentToken = {
   id: string;
   name: string;

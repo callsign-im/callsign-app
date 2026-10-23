@@ -41,7 +41,9 @@ export function describeEvent(event: LedgerEvent): string {
   const { data } = event;
   switch (event.type) {
     case "agent.created":
-      return `Registered ${event.agent}`;
+      return data.via === "self-registration"
+        ? `${event.agent} registered itself and was approved`
+        : `Registered ${event.agent}`;
     case "agent.updated":
       return `Updated settings: ${(data.fields as string[] | undefined)?.join(", ") ?? "profile"}`;
     case "token.created":
