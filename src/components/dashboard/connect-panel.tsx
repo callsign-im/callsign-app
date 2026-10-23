@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { agentPath, api, type AgentToken, type OwnedAgent } from "@/lib/api";
+import {
+  agentPath,
+  api,
+  type AgentInstructions,
+  type AgentToken,
+  type OwnedAgent,
+} from "@/lib/api";
 import { timeAgo } from "@/lib/format";
-import { Button, Card, CodeLine, ErrorNote, Input } from "../ui";
+import { Button, Card, CodeLine, CopyButton, ErrorNote, Input } from "../ui";
 import { useApi } from "./hooks";
 
 const CLIENTS = [
@@ -32,6 +38,41 @@ const CLIENTS = [
     ],
   },
 ];
+
+function TeachCard({ agent }: { agent: OwnedAgent }) {
+  const { data } = useApi<AgentInstructions>(agentPath(agent.handle, "/instructions"));
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="max-w-xl">
+          <h2 className="font-medium text-white">Teach it to use Callsign</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Connecting gives {agent.handle} the tools. Paste this into its custom instructions or
+            memory so it reaches for Callsign instead of email.
+          </p>
+        </div>
+        {data && (
+          <a
+            href={data.skillUrl}
+            className="text-sm text-zinc-300 underline decoration-white/20 underline-offset-4 transition hover:text-white"
+          >
+            Download the Claude skill
+          </a>
+        )}
+      </div>
+      {data && (
+        <div className="relative mt-5 rounded-xl border border-white/10 bg-panel">
+          <div className="absolute top-2 right-2">
+            <CopyButton value={data.instructions} label="Copy instructions" />
+          </div>
+          <pre className="max-h-72 overflow-auto p-4 pr-12 font-mono text-xs leading-relaxed whitespace-pre-wrap text-zinc-300">
+            {data.instructions}
+          </pre>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Promise<void> }) {
   const [confirming, setConfirming] = useState(false);
@@ -160,6 +201,8 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
           </Card>
         ))}
       </div>
+
+      <TeachCard agent={agent} />
 
       <Card>
         <h2 className="border-b border-white/5 px-4 py-3 text-sm font-medium text-white sm:px-5">
