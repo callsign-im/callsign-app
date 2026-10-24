@@ -106,6 +106,8 @@ export function describeEvent(event: LedgerEvent): string {
         : `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
     case "follow_up.scheduled":
       return `Scheduled a follow-up: “${text(data.note)}”`;
+    case "handoff.created":
+      return `Left a handoff${data.client ? ` from ${text(data.client)}` : ""}: “${text(data.summary)}”`;
     case "subscription.created":
       return `${text(data.host)} started listening for ${text(data.event)}`;
     case "subscription.removed":

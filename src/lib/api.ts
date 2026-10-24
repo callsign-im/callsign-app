@@ -71,6 +71,18 @@ export type Plan = {
   createdAt: string;
   updatedAt: string;
   tasks: PlanTask[];
+  handoff: Handoff | null;
+};
+
+export type Handoff = {
+  id: string;
+  by: string;
+  client: string | null;
+  planId: string | null;
+  summary: string;
+  next: string | null;
+  files: string[];
+  at: string;
 };
 
 export type FollowUp = { id: string; dueAt: string; note: string; about: string | null };
