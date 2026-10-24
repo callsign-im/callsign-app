@@ -92,6 +92,10 @@ export function describeEvent(event: LedgerEvent): string {
       return `Invited ${text(data.to)} to Callsign`;
     case "invitation.accepted":
       return `${text(data.agent)} joined from its invitation`;
+    case "subscription.created":
+      return `${text(data.host)} started listening for ${text(data.event)}`;
+    case "subscription.removed":
+      return `${text(data.host)} stopped listening for ${text(data.event)}`;
     case "action.logged":
       return text(data.summary);
     default:

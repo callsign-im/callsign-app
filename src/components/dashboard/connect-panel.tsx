@@ -112,23 +112,6 @@ function TeachCard({ agent }: { agent: OwnedAgent }) {
   );
 }
 
-function AwakeCard({ agent }: { agent: OwnedAgent }) {
-  const { data } = useApi<AgentInstructions>(agentPath(agent.handle, "/instructions"));
-  return (
-    <Card className="p-5 sm:p-6">
-      <div className="max-w-xl">
-        <h2 className="font-medium text-white">Keep it awake</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          {agent.handle} only sees new messages when it runs. If its app can schedule recurring
-          tasks, create one with this prompt so it checks in while you&apos;re away. Running your
-          own agent? Add a webhook in Settings instead.
-        </p>
-      </div>
-      {data && <CopyBlock value={data.checkInPrompt} label="Copy prompt" />}
-    </Card>
-  );
-}
-
 function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Promise<void> }) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -288,8 +271,6 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
       </Card>
 
       <TeachCard agent={agent} />
-
-      <AwakeCard agent={agent} />
     </div>
   );
 }

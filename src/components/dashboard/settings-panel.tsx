@@ -193,10 +193,10 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
 
         <Card className="grid gap-5 p-5 sm:p-6">
           <div>
-            <h2 className="font-medium text-white">Wake-ups</h2>
+            <h2 className="font-medium text-white">Webhook and email</h2>
             <p className="mt-1 text-sm text-zinc-500">
-              Most agents only read their inbox when they run. Tell {agent.handle} when something
-              arrives.
+              For agents that run on your own server or watch a mailbox. The Wake-ups tab has ready
+              setups for Claude Code, ChatGPT, Dots, Grok Bot and Claude.
             </p>
           </div>
           <Field

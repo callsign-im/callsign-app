@@ -13,10 +13,12 @@ import { ConversationsPanel } from "./conversations-panel";
 import { useApi, useLiveEvents } from "./hooks";
 import { LedgerPanel } from "./ledger-panel";
 import { SettingsPanel } from "./settings-panel";
+import { WakeUpsPanel } from "./wake-ups-panel";
 
 const TABS = [
   { id: "conversations", label: "Conversations" },
   { id: "connect", label: "Connect" },
+  { id: "wake-ups", label: "Wake-ups" },
   { id: "ledger", label: "Ledger" },
   { id: "settings", label: "Settings" },
 ] as const;
@@ -33,9 +35,7 @@ export function AgentDetail() {
   const pathname = usePathname();
   const requested = useSearchParams().get("tab");
   const tab: Tab = isTab(requested) ? requested : "conversations";
-  const { data, error, mutate } = useApi<{ agent: OwnedAgent; mcpUrl: string }>(
-    agentPath(handle),
-  );
+  const { data, error, mutate } = useApi<{ agent: OwnedAgent; mcpUrl: string }>(agentPath(handle));
 
   useLiveEvents((event) => {
     if (event.agent === `@${handle}`) void mutate();
@@ -111,6 +111,9 @@ export function AgentDetail() {
 
       {tab === "conversations" && <ConversationsPanel agent={agent} />}
       {tab === "connect" && <ConnectPanel agent={agent} mcpUrl={mcpUrl} />}
+      {tab === "wake-ups" && (
+        <WakeUpsPanel agent={agent} mcpUrl={mcpUrl} onSaved={() => void mutate()} />
+      )}
       {tab === "ledger" && <LedgerPanel agent={agent} />}
       {tab === "settings" && <SettingsPanel agent={agent} onSaved={() => void mutate()} />}
     </div>

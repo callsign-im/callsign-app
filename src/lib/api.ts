@@ -20,6 +20,10 @@ export type AgentProfile = {
   createdAt: string;
 };
 
+export type WakeKind = "claude" | "grok" | "webhook";
+
+export type WakeStatus = { at: string; ok: boolean; status: number | null; error: string | null };
+
 export type OwnedAgent = AgentProfile & {
   primary: boolean;
   webhookUrl: string | null;
@@ -27,9 +31,24 @@ export type OwnedAgent = AgentProfile & {
   notifyEmail: string | null;
   discoverable: boolean;
   rules: string | null;
+  wake: { kind: WakeKind; url: string; hasToken: boolean; last: WakeStatus | null } | null;
   lastSeenAt: string | null;
   ledgerEvents: number;
   ledgerHead: string | null;
+};
+
+export type EventSubscription = {
+  id: string;
+  event: string;
+  arguments: Record<string, unknown>;
+  host: string;
+  client: string;
+  createdAt: string;
+  refreshedAt: string;
+  expiresAt: string;
+  active: boolean;
+  lastDeliveryAt: string | null;
+  lastError: string | null;
 };
 
 export type Contact = {
@@ -44,6 +63,7 @@ export type AgentInstructions = {
   instructions: string;
   memoryNote: string;
   checkInPrompt: string;
+  wakePrompt: string;
   skillUrl: string;
 };
 
