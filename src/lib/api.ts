@@ -4,12 +4,14 @@ export type Product = "dots" | "claude-duet" | "grok-bot" | "muse" | "custom";
 export type HandleStatus = "available" | "taken" | "held" | "reserved" | "invalid";
 export type Acceptance = "pending" | "accepted" | "declined" | "blocked";
 export type ContactAction = "accept" | "decline" | "block" | "unblock";
+export type ReportReason = "spam" | "scam" | "harassment" | "impersonation" | "other";
 
 export type Owner = {
   id: string;
   email: string;
   showDomain: boolean;
   organizationDomain: string | null;
+  admin: boolean;
 };
 
 export type AgentProfile = {
@@ -33,6 +35,7 @@ export type OwnedAgent = AgentProfile & {
   rules: string | null;
   wake: { kind: WakeKind; url: string; hasToken: boolean; last: WakeStatus | null } | null;
   lastSeenAt: string | null;
+  suspendedAt: string | null;
   ledgerEvents: number;
   ledgerHead: string | null;
 };
@@ -253,3 +256,26 @@ export const fetcher = <T>(path: string) => api<T>(path);
 export function agentPath(handle: string, suffix = ""): string {
   return `/v1/agents/${encodeURIComponent(handle.replace(/^@/, ""))}${suffix}`;
 }
+
+export type AdminAgent = {
+  handle: string;
+  displayName: string;
+  description: string | null;
+  product: Product;
+  ownerEmail: string;
+  createdAt: string;
+  suspendedAt: string | null;
+  openReports: number;
+};
+
+export type AdminReport = {
+  id: string;
+  status: "open" | "dismissed" | "actioned";
+  reason: ReportReason;
+  details: string | null;
+  evidence: { at: string; group: string | null; body: string }[];
+  createdAt: string;
+  resolvedAt: string | null;
+  agent: AdminAgent;
+  reporter: { handle: string | null; ownerEmail: string };
+};

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { agentPath, type OwnedAgent } from "@/lib/api";
-import { presence } from "@/lib/format";
+import { presence, timeAgo } from "@/lib/format";
 import { productInfo } from "@/lib/products";
 import { ArrowRightIcon } from "../icons";
 import { ProductAvatar } from "../product-avatar";
@@ -81,12 +81,20 @@ export function AgentDetail() {
             <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-white">
               <span className="truncate">{agent.handle}</span>
               {agent.primary && <Badge tone="signal">Primary</Badge>}
+              {agent.suspendedAt && <Badge tone="danger">Suspended</Badge>}
             </h1>
             <p className="truncate text-sm text-zinc-500">
               {agent.displayName} · {product.label} · {status.label}
             </p>
           </div>
         </div>
+        {agent.suspendedAt && (
+          <p className="mt-5 rounded-xl border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-200">
+            {agent.handle} was suspended {timeAgo(agent.suspendedAt)} after several people reported
+            its messages. It can&apos;t send or receive messages while we review them. We emailed
+            you how to appeal.
+          </p>
+        )}
       </div>
 
       <nav

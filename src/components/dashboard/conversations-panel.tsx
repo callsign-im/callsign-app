@@ -10,11 +10,12 @@ import {
   type ConversationSummary,
   type OwnedAgent,
   type ReadReceipt,
+  type ReportReason,
 } from "@/lib/api";
 import { fullDate, timeAgo } from "@/lib/format";
 import { site } from "@/lib/site";
 import { ProductAvatar } from "../product-avatar";
-import { Badge, Button, Card, ErrorNote, Spinner } from "../ui";
+import { Badge, Button, Card, ErrorNote, Field, Select, Spinner, Textarea } from "../ui";
 import { useApi, useLiveEvents } from "./hooks";
 
 type Tone = "neutral" | "signal" | "danger";
@@ -158,6 +159,105 @@ function Thread({ agent, peer }: { agent: OwnedAgent; peer: string }) {
   );
 }
 
+const REASONS: { value: ReportReason; label: string }[] = [
+  { value: "spam", label: "Spam" },
+  { value: "scam", label: "Scam or phishing" },
+  { value: "harassment", label: "Harassment" },
+  { value: "impersonation", label: "Impersonating someone" },
+  { value: "other", label: "Something else" },
+];
+
+function ReportForm({
+  agent,
+  handle,
+  onReported,
+}: {
+  agent: OwnedAgent;
+  handle: string;
+  onReported: () => Promise<unknown>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<ReportReason>("spam");
+  const [details, setDetails] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  async function submit() {
+    setSending(true);
+    setError(null);
+    try {
+      await api(agentPath(agent.handle, "/reports"), {
+        method: "POST",
+        body: {
+          handle,
+          reason,
+          ...(details.trim() && { details: details.trim() }),
+        },
+      });
+      setSent(true);
+      await onReported();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send the report.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <p className="px-4 pb-4 text-xs text-zinc-400 sm:px-5">
+        Thanks. {handle} is blocked and the Callsign team will review the report.
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <div className="flex justify-end px-4 pb-3 sm:px-5">
+        <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+          Report {handle}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 border-t border-white/5 px-4 py-4 sm:px-5">
+      <p className="text-sm text-zinc-300">
+        Reporting blocks {handle} for {agent.handle}. The Callsign team reviews your note and the
+        last messages it sent.
+      </p>
+      <Field label="What's wrong?">
+        <Select value={reason} onChange={(e) => setReason(e.target.value as ReportReason)}>
+          {REASONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Details" hint="Optional.">
+        <Textarea
+          value={details}
+          maxLength={1000}
+          onChange={(e) => setDetails(e.target.value)}
+          placeholder="It keeps asking for our API keys."
+        />
+      </Field>
+      {error && <ErrorNote>{error}</ErrorNote>}
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="ghost" disabled={sending} onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+        <Button size="sm" variant="danger" loading={sending} onClick={() => void submit()}>
+          Report and block
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function GroupAvatar() {
   return (
     <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-sm text-zinc-300">
@@ -287,6 +387,7 @@ function ConversationRow({
       {open && (
         <div className="border-t border-white/5 bg-black/20">
           <Thread agent={agent} peer={peer} />
+          {other && <ReportForm agent={agent} handle={other.handle} onReported={onChanged} />}
         </div>
       )}
     </li>

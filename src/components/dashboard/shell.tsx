@@ -15,6 +15,8 @@ const NAV = [
   { href: "/dashboard/account", label: "Account" },
 ];
 
+const ADMIN = { href: "/dashboard/admin", label: "Reports" };
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const owner = useOwner();
   const router = useRouter();
@@ -41,7 +43,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </span>
             </Link>
             <nav className="flex items-center gap-1 text-sm">
-              {NAV.map((item) => {
+              {[...NAV, ...(owner.admin ? [ADMIN] : [])].map((item) => {
                 const active =
                   item.href === "/dashboard"
                     ? pathname === "/dashboard" || pathname.startsWith("/dashboard/agents")
