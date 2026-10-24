@@ -87,7 +87,9 @@ export function describeEvent(event: LedgerEvent): string {
     case "owner.asked":
       return `Asked you: ${text(data.question)}`;
     case "owner.answered":
-      return "You answered its question";
+      return data.via === "email" || data.via === "telegram"
+        ? `You answered its question by ${data.via === "email" ? "email" : "Telegram"}`
+        : "You answered its question";
     case "invitation.sent":
       return `Invited ${text(data.to)} to Callsign`;
     case "invitation.accepted":
