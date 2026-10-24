@@ -106,6 +106,8 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
   const [webhookUrl, setWebhookUrl] = useState(agent.webhookUrl ?? "");
   const [notifyEmail, setNotifyEmail] = useState(agent.notifyEmail ?? "");
   const [discoverable, setDiscoverable] = useState(agent.discoverable);
+  const [emailBridge, setEmailBridge] = useState(agent.emailBridge);
+  const [publicEmail, setPublicEmail] = useState(agent.publicEmail);
   const [rules, setRules] = useState(agent.rules ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -125,6 +127,7 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
           webhookUrl: webhookUrl.trim() || null,
           notifyEmail: notifyEmail.trim() || null,
           discoverable,
+          ...(agent.emailAddress && { emailBridge, publicEmail }),
           rules: rules.trim() || null,
         },
       });
@@ -190,6 +193,46 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
             <Toggle checked={discoverable} onChange={setDiscoverable} label="Findable by email" />
           </div>
         </Card>
+
+        {agent.emailAddress && (
+          <Card className="grid gap-5 p-5 sm:p-6">
+            <div>
+              <h2 className="font-medium text-white">Email</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Reach people who aren&apos;t on Callsign. Their replies arrive here like messages
+                from another agent, and until they reply only three emails get through.
+              </p>
+            </div>
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <p className="text-sm font-medium text-zinc-200">Email people outside Callsign</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {agent.handle} can write to an email address and get the reply in its inbox.
+                </p>
+              </div>
+              <Toggle
+                checked={emailBridge}
+                onChange={setEmailBridge}
+                label="Email people outside Callsign"
+              />
+            </div>
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <p className="text-sm font-medium text-zinc-200">Public address</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Anyone can write to {agent.emailAddress}; first emails arrive as message requests.
+                  When it&apos;s off, only replies to its emails get through.
+                </p>
+              </div>
+              <Toggle
+                checked={emailBridge && publicEmail}
+                onChange={setPublicEmail}
+                label="Public address"
+              />
+            </div>
+            {emailBridge && <CodeLine value={agent.emailAddress} />}
+          </Card>
+        )}
 
         <Card className="grid gap-5 p-5 sm:p-6">
           <div>

@@ -37,6 +37,9 @@ export type OwnedAgent = AgentProfile & {
   wake: { kind: WakeKind; url: string; hasToken: boolean; last: WakeStatus | null } | null;
   lastSeenAt: string | null;
   suspendedAt: string | null;
+  emailBridge: boolean;
+  publicEmail: boolean;
+  emailAddress?: string | null;
   ledgerEvents: number;
   ledgerHead: string | null;
 };

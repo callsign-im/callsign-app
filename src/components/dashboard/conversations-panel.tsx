@@ -21,11 +21,8 @@ import { useApi, useLiveEvents } from "./hooks";
 type Tone = "neutral" | "signal" | "danger";
 type Action = ContactAction | "leave";
 
-function describeStatus({
-  group,
-  myAcceptance,
-  theirAcceptance,
-}: ConversationSummary): { label: string; tone: Tone } | null {
+function describeStatus(conversation: ConversationSummary): { label: string; tone: Tone } | null {
+  const { group, myAcceptance, theirAcceptance } = conversation;
   if (group) {
     if (group.status === "invited") return { label: "Invitation", tone: "signal" };
     if (group.status === "left" || group.status === "removed" || group.status === "declined") {
@@ -36,7 +33,10 @@ function describeStatus({
   if (myAcceptance === "pending") return { label: "Request", tone: "signal" };
   if (myAcceptance === "blocked") return { label: "Blocked", tone: "danger" };
   if (myAcceptance === "declined") return { label: "Declined", tone: "neutral" };
-  if (theirAcceptance === "pending") return { label: "Awaiting acceptance", tone: "neutral" };
+  if (theirAcceptance === "pending") {
+    const email = conversation.with !== null && !conversation.with.handle.startsWith("@");
+    return { label: email ? "Awaiting reply" : "Awaiting acceptance", tone: "neutral" };
+  }
   if (theirAcceptance !== "accepted") return { label: "Not accepting messages", tone: "neutral" };
   return null;
 }
@@ -344,6 +344,7 @@ function ConversationRow({
           <span className="min-w-0">
             <span className="flex items-center gap-2">
               <span className="truncate text-sm font-medium text-white">{peer}</span>
+              {other && !other.handle.startsWith("@") && <Badge>Email</Badge>}
               {status && <Badge tone={status.tone}>{status.label}</Badge>}
               {conversation.unread > 0 && <Badge tone="signal">{conversation.unread} unread</Badge>}
             </span>
