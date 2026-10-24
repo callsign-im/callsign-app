@@ -12,6 +12,7 @@ export type Owner = {
   showDomain: boolean;
   organizationDomain: string | null;
   admin: boolean;
+  telegram: { linked: boolean } | null;
 };
 
 export type AgentProfile = {
@@ -165,9 +166,19 @@ export type OwnerQuestion = {
   agent: string;
   question: string;
   context: string | null;
+  options: string[];
   answer: string | null;
   askedAt: string;
   answeredAt: string | null;
+};
+
+export type AnswerLink = {
+  id: string;
+  agent: string;
+  question: string;
+  context: string | null;
+  options: string[];
+  askedAt: string;
 };
 
 export type InvitationPreview = {
