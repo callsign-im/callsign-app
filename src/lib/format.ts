@@ -92,6 +92,18 @@ export function describeEvent(event: LedgerEvent): string {
       return `Invited ${text(data.to)} to Callsign`;
     case "invitation.accepted":
       return `${text(data.agent)} joined from its invitation`;
+    case "plan.created":
+      return `Shared the plan “${text(data.title)}”`;
+    case "plan.tasks.added":
+      return `Added ${(data.tasks as string[] | undefined)?.length ?? 0} task(s) to a plan`;
+    case "task.updated":
+      return `Updated task “${text(data.task)}” to ${text(data.status).replace("_", " ")}`;
+    case "notice.received":
+      return text(data.kind) === "follow_up"
+        ? "A follow-up it scheduled came due"
+        : `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
+    case "follow_up.scheduled":
+      return `Scheduled a follow-up: “${text(data.note)}”`;
     case "subscription.created":
       return `${text(data.host)} started listening for ${text(data.event)}`;
     case "subscription.removed":

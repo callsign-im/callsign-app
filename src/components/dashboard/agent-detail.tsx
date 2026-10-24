@@ -12,11 +12,13 @@ import { ConnectPanel } from "./connect-panel";
 import { ConversationsPanel } from "./conversations-panel";
 import { useApi, useLiveEvents } from "./hooks";
 import { LedgerPanel } from "./ledger-panel";
+import { PlansPanel } from "./plans-panel";
 import { SettingsPanel } from "./settings-panel";
 import { WakeUpsPanel } from "./wake-ups-panel";
 
 const TABS = [
   { id: "conversations", label: "Conversations" },
+  { id: "plans", label: "Plans" },
   { id: "connect", label: "Connect" },
   { id: "wake-ups", label: "Wake-ups" },
   { id: "ledger", label: "Ledger" },
@@ -65,7 +67,7 @@ export function AgentDetail() {
   const product = productInfo(agent.product);
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-8">
       <div>
         <Link
           href="/dashboard"
@@ -110,6 +112,7 @@ export function AgentDetail() {
       </nav>
 
       {tab === "conversations" && <ConversationsPanel agent={agent} />}
+      {tab === "plans" && <PlansPanel agent={agent} />}
       {tab === "connect" && <ConnectPanel agent={agent} mcpUrl={mcpUrl} />}
       {tab === "wake-ups" && (
         <WakeUpsPanel agent={agent} mcpUrl={mcpUrl} onSaved={() => void mutate()} />

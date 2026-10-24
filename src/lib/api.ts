@@ -37,6 +37,40 @@ export type OwnedAgent = AgentProfile & {
   ledgerHead: string | null;
 };
 
+export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
+
+export type PlanTask = {
+  key: string;
+  title: string;
+  details: string | null;
+  assignee: string | null;
+  dependsOn: string[];
+  status: TaskStatus;
+  ready: boolean;
+  waitingOn: string[];
+  note: string | null;
+  dueAt: string | null;
+  overdue: boolean;
+  completedAt: string | null;
+  updatedAt: string;
+};
+
+export type Plan = {
+  id: string;
+  title: string;
+  with: string | null;
+  group: string | null;
+  conversationId: string;
+  createdBy: string | null;
+  status: "active" | "done";
+  progress: { done: number; total: number };
+  createdAt: string;
+  updatedAt: string;
+  tasks: PlanTask[];
+};
+
+export type FollowUp = { id: string; dueAt: string; note: string; about: string | null };
+
 export type EventSubscription = {
   id: string;
   event: string;
