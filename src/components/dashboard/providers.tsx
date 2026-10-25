@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
-import { ApiError, type LedgerEvent, type Owner } from "@/lib/api";
+import { ApiError, type LedgerEvent, type Owner, type SessionChange } from "@/lib/api";
 import { site } from "@/lib/site";
 import { Button, Spinner } from "../ui";
-import { LiveEventsContext, OwnerContext, useApi, type LiveListener } from "./hooks";
+import { LiveEventsContext, OwnerContext, SessionEventsContext, useApi } from "./hooks";
 
 export function SessionGate({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -38,24 +38,37 @@ export function SessionGate({ children }: { children: ReactNode }) {
   return <OwnerContext value={data.owner}>{children}</OwnerContext>;
 }
 
-export function LiveEventsProvider({ children }: { children: ReactNode }) {
-  const listeners = useRef(new Set<LiveListener>());
-
-  useEffect(() => {
-    const source = new EventSource(new URL("/v1/events", site.apiUrl), { withCredentials: true });
-    source.addEventListener("ledger", (message) => {
-      const { event } = JSON.parse(String(message.data)) as { event: LedgerEvent };
-      for (const listener of listeners.current) listener(event);
-    });
-    return () => source.close();
-  }, []);
-
-  const subscribe = useCallback((listener: LiveListener) => {
+function useListeners<T>() {
+  const listeners = useRef(new Set<(value: T) => void>());
+  const subscribe = useCallback((listener: (value: T) => void) => {
     listeners.current.add(listener);
     return () => {
       listeners.current.delete(listener);
     };
   }, []);
+  return { listeners, subscribe };
+}
 
-  return <LiveEventsContext value={subscribe}>{children}</LiveEventsContext>;
+export function LiveEventsProvider({ children }: { children: ReactNode }) {
+  const ledger = useListeners<LedgerEvent>();
+  const sessions = useListeners<SessionChange>();
+
+  useEffect(() => {
+    const source = new EventSource(new URL("/v1/events", site.apiUrl), { withCredentials: true });
+    source.addEventListener("ledger", (message) => {
+      const { event } = JSON.parse(String(message.data)) as { event: LedgerEvent };
+      for (const listener of ledger.listeners.current) listener(event);
+    });
+    source.addEventListener("session", (message) => {
+      const change = JSON.parse(String(message.data)) as SessionChange;
+      for (const listener of sessions.listeners.current) listener(change);
+    });
+    return () => source.close();
+  }, [ledger.listeners, sessions.listeners]);
+
+  return (
+    <LiveEventsContext value={ledger.subscribe}>
+      <SessionEventsContext value={sessions.subscribe}>{children}</SessionEventsContext>
+    </LiveEventsContext>
+  );
 }

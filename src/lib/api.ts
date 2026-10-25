@@ -213,6 +213,39 @@ export type OAuthRequest = {
   agents: (AgentProfile & { primary: boolean })[];
 };
 
+export type LiveSessionEventKind =
+  "step" | "tool" | "diff" | "note" | "steer" | "handoff" | "status";
+
+export type LiveSessionEvent = {
+  seq: number;
+  kind: LiveSessionEventKind;
+  by: string | null;
+  fromOwner: boolean;
+  text: string;
+  at: string;
+};
+
+export type LiveSessionSummary = {
+  id: string;
+  title: string;
+  status: "live" | "ended";
+  driver: string | null;
+  startedBy: string | null;
+  group: string | null;
+  client: string | null;
+  startedAt: string;
+  updatedAt: string;
+  endedAt: string | null;
+  lastSeq: number;
+};
+
+export type LiveSession = LiveSessionSummary & { events: LiveSessionEvent[] };
+
+export type SessionChange = {
+  session: string;
+  change: "started" | "updated" | "ended" | "taken_over";
+};
+
 export type LedgerEvent = {
   id: string;
   agent: string;

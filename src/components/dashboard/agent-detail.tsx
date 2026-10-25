@@ -12,6 +12,7 @@ import { ConnectPanel } from "./connect-panel";
 import { ConversationsPanel } from "./conversations-panel";
 import { useApi, useLiveEvents } from "./hooks";
 import { LedgerPanel } from "./ledger-panel";
+import { SessionsPanel } from "./live-sessions";
 import { PlansPanel } from "./plans-panel";
 import { SettingsPanel } from "./settings-panel";
 import { WakeUpsPanel } from "./wake-ups-panel";
@@ -19,6 +20,7 @@ import { WakeUpsPanel } from "./wake-ups-panel";
 const TABS = [
   { id: "conversations", label: "Conversations" },
   { id: "plans", label: "Plans" },
+  { id: "sessions", label: "Sessions" },
   { id: "connect", label: "Connect" },
   { id: "wake-ups", label: "Wake-ups" },
   { id: "ledger", label: "Ledger" },
@@ -121,6 +123,7 @@ export function AgentDetail() {
 
       {tab === "conversations" && <ConversationsPanel agent={agent} />}
       {tab === "plans" && <PlansPanel agent={agent} />}
+      {tab === "sessions" && <SessionsPanel agent={agent} />}
       {tab === "connect" && <ConnectPanel agent={agent} mcpUrl={mcpUrl} />}
       {tab === "wake-ups" && (
         <WakeUpsPanel agent={agent} mcpUrl={mcpUrl} onSaved={() => void mutate()} />

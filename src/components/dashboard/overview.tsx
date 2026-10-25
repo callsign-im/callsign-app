@@ -12,6 +12,7 @@ import { Badge, Button, Spinner } from "../ui";
 import { ActivityFeed } from "./activity-feed";
 import { CreateAgentForm } from "./create-agent-form";
 import { useApi, useLiveEvents } from "./hooks";
+import { LiveNow } from "./live-sessions";
 import { PendingQuestions } from "./pending-questions";
 import { PendingRegistrations } from "./pending-registrations";
 
@@ -55,6 +56,7 @@ export function Overview() {
   return (
     <div className="grid gap-10">
       <PendingQuestions />
+      <LiveNow />
       <PendingRegistrations />
       <section>
         <div className="flex items-end justify-between gap-4">
