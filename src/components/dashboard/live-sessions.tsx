@@ -13,7 +13,7 @@ import {
 } from "@/lib/api";
 import { fullDate, timeAgo } from "@/lib/format";
 import { ArrowRightIcon } from "../icons";
-import { Badge, Button, Card, ErrorNote, Spinner, Textarea } from "../ui";
+import { Badge, Button, Card, ErrorNote, Select, Spinner, Textarea } from "../ui";
 import { useApi, useSessionEvents } from "./hooks";
 
 function LiveBadge({ status }: { status: LiveSessionSummary["status"] }) {
@@ -242,11 +242,105 @@ function Composer({
   );
 }
 
+type SessionPayload = {
+  session: LiveSession;
+  through: string;
+  canEnd: boolean;
+  handOverTo: string[];
+};
+
+// Hand the session to one of the owner's agents, or end it. The agent that was driving is told.
+function SessionControls({
+  session,
+  canEnd,
+  handOverTo,
+  onChanged,
+}: {
+  session: LiveSession;
+  canEnd: boolean;
+  handOverTo: string[];
+  onChanged: () => void;
+}) {
+  const [target, setTarget] = useState("");
+  const [busy, setBusy] = useState<"hand-over" | "end" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  if (session.status !== "live" || (!canEnd && handOverTo.length === 0)) return null;
+  const chosen = target || handOverTo[0] || "";
+
+  async function act(action: "hand-over" | "end") {
+    if (
+      action === "end" &&
+      !window.confirm(
+        `End "${session.title}"? ${session.driver ?? "The agent"} will be told to stop.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(action);
+    setError(null);
+    try {
+      await api(`/v1/sessions/${session.id}/${action}`, {
+        method: "POST",
+        ...(action === "hand-over" && { body: { to: chosen } }),
+      });
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That didn't work. Try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="mt-2 grid gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {handOverTo.length > 0 && (
+          <>
+            {handOverTo.length > 1 && (
+              <Select
+                value={chosen}
+                onChange={(event) => setTarget(event.target.value)}
+                aria-label="Agent to hand the session to"
+                className="h-8 w-auto py-0 text-xs"
+              >
+                {handOverTo.map((handle) => (
+                  <option key={handle} value={handle}>
+                    {handle}
+                  </option>
+                ))}
+              </Select>
+            )}
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={busy === "hand-over"}
+              disabled={busy !== null}
+              onClick={() => void act("hand-over")}
+            >
+              Hand over to {handOverTo.length > 1 ? "this agent" : chosen}
+            </Button>
+          </>
+        )}
+        {canEnd && (
+          <Button
+            size="sm"
+            variant="danger"
+            loading={busy === "end"}
+            disabled={busy !== null}
+            onClick={() => void act("end")}
+          >
+            End session
+          </Button>
+        )}
+      </div>
+      {error && <ErrorNote>{error}</ErrorNote>}
+    </div>
+  );
+}
+
 export function LiveSessionPage() {
   const { id } = useParams<{ id: string }>();
-  const { data, error, mutate } = useApi<{ session: LiveSession; through: string }>(
-    `/v1/sessions/${id}`,
-  );
+  const { data, error, mutate } = useApi<SessionPayload>(`/v1/sessions/${id}`);
   const session = data?.session;
   const end = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
@@ -258,14 +352,16 @@ export function LiveSessionPage() {
   useSessionEvents((change) => {
     if (change.session !== id || !data) return;
     follow.current = nearBottom();
-    void api<{ session: LiveSession }>(`/v1/sessions/${id}?after=${data.session.lastSeq}`).then(
-      ({ session: fresh }) =>
+    void api<SessionPayload>(`/v1/sessions/${id}?after=${data.session.lastSeq}`).then(
+      ({ session: fresh, canEnd, handOverTo }) =>
         mutate(
           (current) => {
             if (!current) return current;
             const known = new Set(current.session.events.map((event) => event.seq));
             return {
               ...current,
+              canEnd,
+              handOverTo,
               session: {
                 ...fresh,
                 events: [
@@ -327,6 +423,15 @@ export function LiveSessionPage() {
           <span title={fullDate(session.startedAt)}>started {timeAgo(session.startedAt)}</span>
         </p>
         <p className="text-xs text-zinc-600">You&apos;re watching through {data.through}.</p>
+        <SessionControls
+          session={session}
+          canEnd={data.canEnd}
+          handOverTo={data.handOverTo}
+          onChanged={() => {
+            follow.current = true;
+            void mutate();
+          }}
+        />
       </header>
 
       <ol className="grid gap-2">
