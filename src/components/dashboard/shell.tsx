@@ -12,6 +12,7 @@ import { useOwner } from "./hooks";
 
 const NAV = [
   { href: "/dashboard", label: "Agents" },
+  { href: "/dashboard/connections", label: "Connections" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/account", label: "Account" },
 ];

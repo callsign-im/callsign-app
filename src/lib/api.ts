@@ -366,7 +366,7 @@ export class ApiError extends Error {
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
 };
 
@@ -444,3 +444,87 @@ export type AdminReport = {
   agent: AdminAgent;
   reporter: { handle: string | null; ownerEmail: string };
 };
+
+export type ConnectionStatus = "pending" | "active" | "needs_reauth" | "error";
+
+export type ConnectionSummary = {
+  id: string;
+  name: string;
+  slug: string;
+  serverUrl: string;
+  host: string;
+  authKind: "oauth" | "header" | "none";
+  header: string | null;
+  status: ConnectionStatus;
+  lastError: string | null;
+  toolsSyncedAt: string | null;
+  tools: { total: number; enabled: number; changed: number };
+  createdAt: string;
+};
+
+export type ConnectionTool = {
+  name: string;
+  title: string | null;
+  description: string | null;
+  write: boolean;
+  enabled: boolean;
+  status: "new" | "active" | "changed" | "removed";
+  exposed: boolean;
+};
+
+export type ConnectionGrant = { agent: string; access: "read" | "write"; tools: string[] | null };
+
+export type ConnectionShare = {
+  id: string;
+  group: string;
+  sharer: string;
+  tools: string[];
+  approval: "none" | "write" | "all";
+  perAgentDaily: number;
+  paused: boolean;
+  optedOut: number;
+  createdAt: string;
+};
+
+export type ConnectionDetail = {
+  connection: ConnectionSummary;
+  tools: ConnectionTool[];
+  grants: ConnectionGrant[];
+  shares: ConnectionShare[];
+};
+
+export type ToolCall = {
+  id: string;
+  connection: string;
+  agent: string | null;
+  tool: string;
+  status: "ok" | "error" | "held" | "refused";
+  durationMs: number | null;
+  error: string | null;
+  arguments: unknown;
+  shared: boolean;
+  createdAt: string;
+};
+
+export type AgentTool = {
+  name: string;
+  title: string | null;
+  description: string | null;
+  write: boolean;
+  connection: string;
+  sharedBy: string | null;
+  group: string | null;
+};
+
+export type AgentShare = {
+  id: string;
+  connection: string;
+  group: string;
+  sharedBy: string;
+  tools: string[];
+  approval: "none" | "write" | "all";
+  paused: boolean;
+  enabled: boolean;
+};
+
+export type AgentTools = { sharedTools: boolean; tools: AgentTool[]; shares: AgentShare[] };

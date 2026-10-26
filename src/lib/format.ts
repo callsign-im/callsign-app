@@ -101,6 +101,12 @@ export function describeEvent(event: LedgerEvent): string {
       return `Released ${HOLD_KINDS[text(data.kind)] ?? "an action"} you approved`;
     case "action.expired":
       return `${capitalize(HOLD_KINDS[text(data.kind)] ?? "an action")} expired before anyone approved it`;
+    case "tool.called":
+      return data.sharedBy
+        ? `Used ${text(data.tool)} from ${text(data.connection)}, shared by ${text(data.sharedBy)}`
+        : `Used ${text(data.tool)} from ${text(data.connection)}`;
+    case "tool.used":
+      return `${text(data.by)} used ${text(data.tool)} from ${text(data.connection)} through its share`;
     case "action.failed":
       return `${capitalize(HOLD_KINDS[text(data.kind)] ?? "an action")} you approved failed`;
     case "request.sent":
@@ -157,6 +163,8 @@ export function describeEvent(event: LedgerEvent): string {
       if (text(data.kind) === "follow_up") return "A follow-up it scheduled came due";
       if (text(data.kind) === "agent.unfrozen") return "Told it that it was unfrozen";
       if (text(data.kind).startsWith("action.")) return "Told it how a held action ended";
+      if (text(data.kind) === "tools.shared")
+        return `${text(data.from)} shared tools with its group`;
       return `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
     case "follow_up.scheduled":
       return `Scheduled a follow-up: “${text(data.note)}”`;

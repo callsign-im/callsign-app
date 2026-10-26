@@ -8,6 +8,7 @@ import { productInfo } from "@/lib/products";
 import { ArrowRightIcon } from "../icons";
 import { ProductAvatar } from "../product-avatar";
 import { Badge, ButtonLink, Card, Spinner } from "../ui";
+import { AgentToolsPanel } from "./agent-tools";
 import { ConnectPanel } from "./connect-panel";
 import { ConversationsPanel } from "./conversations-panel";
 import { useApi, useLiveEvents } from "./hooks";
@@ -23,6 +24,7 @@ const TABS = [
   { id: "plans", label: "Plans" },
   { id: "sessions", label: "Sessions" },
   { id: "connect", label: "Connect" },
+  { id: "tools", label: "Tools" },
   { id: "wake-ups", label: "Wake-ups" },
   { id: "ledger", label: "Ledger" },
   { id: "security", label: "Security" },
@@ -134,6 +136,7 @@ export function AgentDetail() {
       {tab === "plans" && <PlansPanel agent={agent} />}
       {tab === "sessions" && <SessionsPanel agent={agent} />}
       {tab === "connect" && <ConnectPanel agent={agent} mcpUrl={mcpUrl} />}
+      {tab === "tools" && <AgentToolsPanel agent={agent} />}
       {tab === "wake-ups" && (
         <WakeUpsPanel agent={agent} mcpUrl={mcpUrl} onSaved={() => void mutate()} />
       )}
