@@ -39,6 +39,7 @@ export type OwnedAgent = AgentProfile & {
   suspendedAt: string | null;
   emailBridge: boolean;
   publicEmail: boolean;
+  publicPage: boolean;
   emailAddress?: string | null;
   ledgerEvents: number;
   ledgerHead: string | null;

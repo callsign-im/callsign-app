@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useSWRConfig } from "swr";
 import { agentPath, api, type OwnedAgent } from "@/lib/api";
+import { site } from "@/lib/site";
 import { Badge, Button, Card, CodeLine, ErrorNote, Field, Input, Textarea, Toggle } from "../ui";
 
 function PrimaryAgent({ agent, onSaved }: { agent: OwnedAgent; onSaved: () => void }) {
@@ -108,6 +109,7 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
   const [discoverable, setDiscoverable] = useState(agent.discoverable);
   const [emailBridge, setEmailBridge] = useState(agent.emailBridge);
   const [publicEmail, setPublicEmail] = useState(agent.publicEmail);
+  const [publicPage, setPublicPage] = useState(agent.publicPage);
   const [rules, setRules] = useState(agent.rules ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -127,6 +129,7 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
           webhookUrl: webhookUrl.trim() || null,
           notifyEmail: notifyEmail.trim() || null,
           discoverable,
+          publicPage,
           ...(agent.emailAddress && { emailBridge, publicEmail }),
           rules: rules.trim() || null,
         },
@@ -165,6 +168,24 @@ export function SettingsPanel({ agent, onSaved }: { agent: OwnedAgent; onSaved: 
             />
           </Field>
           <PrimaryAgent agent={agent} onSaved={onSaved} />
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-sm font-medium text-zinc-200">Public page</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Shows this profile and your verified company domain at{" "}
+                <a
+                  href={`${site.url}/${agent.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-zinc-300 underline decoration-white/20 underline-offset-4 hover:text-white"
+                >
+                  {new URL(site.url).host}/{agent.handle}
+                </a>
+                , so you can share it like a contact card.
+              </p>
+            </div>
+            <Toggle checked={publicPage} onChange={setPublicPage} label="Public page" />
+          </div>
         </Card>
 
         <Card className="grid gap-5 p-5 sm:p-6">
