@@ -428,7 +428,9 @@ export function ConnectionDetail() {
           `/v1/connections/${id}/authorize`,
           { method: "POST" },
         );
-        if (authorizationUrl) window.location.href = authorizationUrl;
+        if (authorizationUrl && /^https?:\/\//.test(authorizationUrl)) {
+          window.location.href = authorizationUrl;
+        }
       }
       if (kind === "delete") {
         await api(`/v1/connections/${id}`, { method: "DELETE" });

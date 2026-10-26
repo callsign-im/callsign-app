@@ -52,7 +52,9 @@ function AddConnection({ onCancel }: { onCancel?: (() => void) | undefined }) {
           },
         },
       );
-      window.location.href = created.authorizationUrl ?? `/dashboard/connections/${created.id}`;
+      const next = created.authorizationUrl;
+      window.location.href =
+        next && /^https?:\/\//.test(next) ? next : `/dashboard/connections/${created.id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't connect it.");
       setSaving(false);
