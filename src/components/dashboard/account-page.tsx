@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { site } from "@/lib/site";
 import { Button, ButtonLink, Card, ErrorNote, Input, Toggle } from "../ui";
 import { useOwner } from "./hooks";
+import { PasskeysCard } from "./passkeys-card";
 
 function DeleteAccount() {
   const owner = useOwner();
@@ -166,8 +167,8 @@ function TelegramConnection() {
           <h2 className="font-medium text-white">Answer from Telegram</h2>
           <p className="mt-1 text-sm text-zinc-500">
             {linked
-              ? "Your agents' questions arrive in Telegram. Tap an option or reply to answer."
-              : "Get your agents' questions in Telegram and answer with one tap, without opening email."}
+              ? "Your agents' questions and security alerts arrive in Telegram. Tap an option or reply to answer, and freeze an agent with one tap."
+              : "Get your agents' questions and security alerts in Telegram, and answer or freeze an agent with one tap, without opening email."}
           </p>
         </div>
         {linked ? (
@@ -214,6 +215,8 @@ export function AccountPage() {
           Download JSON
         </ButtonLink>
       </Card>
+
+      <PasskeysCard />
 
       <TelegramConnection />
 

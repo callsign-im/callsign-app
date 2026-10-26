@@ -37,6 +37,7 @@ export type OwnedAgent = AgentProfile & {
   wake: { kind: WakeKind; url: string; hasToken: boolean; last: WakeStatus | null } | null;
   lastSeenAt: string | null;
   suspendedAt: string | null;
+  frozenAt: string | null;
   emailBridge: boolean;
   publicEmail: boolean;
   publicPage: boolean;
@@ -134,6 +135,14 @@ export type PendingRegistration = {
   expiresAt: string;
 };
 
+export type Sighting = {
+  ip: string;
+  network: string | null;
+  userAgent: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+};
+
 export type AgentToken = {
   id: string;
   name: string;
@@ -141,7 +150,49 @@ export type AgentToken = {
   prefix: string;
   createdAt: string;
   lastUsedAt: string | null;
+  usage: { last: Sighting; addresses: number } | null;
 };
+
+export type AgentNetwork = {
+  label: string;
+  status: "known" | "pending";
+  firstSeenAt: string;
+  lastSeenAt: string;
+};
+
+export type AlertKind = "new_network" | "burst" | "refresh_token_reused" | "code_reused";
+
+export type SecurityAlert = {
+  id: string;
+  agent: string | null;
+  kind: AlertKind;
+  status: "open" | "acknowledged" | "frozen" | "resolved";
+  title: string;
+  description: string;
+  details: {
+    client?: string;
+    tokenPrefix?: string;
+    network?: string;
+    ip?: string;
+    userAgent?: string | null;
+  };
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedVia: string | null;
+};
+
+export type AlertLink = SecurityAlert & { frozen: boolean };
+
+export type Passkey = {
+  id: string;
+  name: string;
+  deviceType: string;
+  backedUp: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
+export type PasskeyReset = { id: string; runAt: string; status: string };
 
 export type GroupSummary = { name: string; status: string; role: string; members: string[] };
 
@@ -211,7 +262,7 @@ export type OAuthRequest = {
     redirect: { host: string; local: boolean };
   };
   expiresAt: string;
-  agents: (AgentProfile & { primary: boolean })[];
+  agents: (AgentProfile & { primary: boolean; frozen: boolean })[];
 };
 
 export type LiveSessionEventKind =
@@ -252,7 +303,7 @@ export type LedgerEvent = {
   agent: string;
   seq: number;
   type: string;
-  actor: "agent" | "owner" | "peer";
+  actor: "agent" | "owner" | "peer" | "system";
   conversationId: string | null;
   data: Record<string, unknown>;
   prevHash: string | null;
@@ -284,7 +335,26 @@ type RequestOptions = {
   body?: unknown;
 };
 
+let confirmIdentity: (() => Promise<void>) | null = null;
+
+/** The dashboard registers how to ask the owner for their passkey when the API needs it. */
+export function setStepUpHandler(handler: (() => Promise<void>) | null) {
+  confirmIdentity = handler;
+}
+
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  try {
+    return await request<T>(path, options);
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.code !== "step_up_required" || !confirmIdentity) {
+      throw err;
+    }
+    await confirmIdentity();
+    return request<T>(path, options);
+  }
+}
+
+async function request<T>(path: string, options: RequestOptions): Promise<T> {
   let response: Response;
   try {
     response = await fetch(new URL(path, site.apiUrl), {

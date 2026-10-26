@@ -53,7 +53,8 @@ export function OAuthConsent() {
       (loaded) => {
         setRequest(loaded);
         setProduct(guessProduct(loaded.client.name));
-        const primary = loaded.agents.find((agent) => agent.primary) ?? loaded.agents[0];
+        const usable = loaded.agents.filter((agent) => !agent.frozen);
+        const primary = usable.find((agent) => agent.primary) ?? usable[0];
         if (primary) setChoice(primary.handle);
       },
       (err: unknown) => {
@@ -149,7 +150,7 @@ export function OAuthConsent() {
         {request.agents.map((agent) => (
           <label
             key={agent.handle}
-            className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 transition has-checked:border-signal/60 has-checked:bg-signal/[0.06]"
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 transition has-checked:border-signal/60 has-checked:bg-signal/[0.06] has-disabled:cursor-not-allowed has-disabled:opacity-50"
           >
             <input
               type="radio"
@@ -157,13 +158,16 @@ export function OAuthConsent() {
               value={agent.handle}
               checked={choice === agent.handle}
               onChange={() => setChoice(agent.handle)}
+              disabled={agent.frozen}
               className="sr-only"
             />
             <ProductAvatar product={agent.product} />
             <span className="min-w-0">
               <span className="block truncate text-sm text-white">{agent.handle}</span>
               <span className="block truncate text-xs text-zinc-500">
-                {agent.displayName} · {productInfo(agent.product).label}
+                {agent.frozen
+                  ? "Frozen. Unfreeze it from the dashboard first."
+                  : `${agent.displayName} · ${productInfo(agent.product).label}`}
               </span>
             </span>
           </label>

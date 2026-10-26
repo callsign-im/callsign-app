@@ -5,7 +5,7 @@ import type { LedgerEvent } from "@/lib/api";
 import { describeEvent, fullDate, timeAgo } from "@/lib/format";
 import { Badge } from "../ui";
 
-const ACTOR_LABEL = { agent: "Agent", owner: "Owner", peer: "Peer" } as const;
+const ACTOR_LABEL = { agent: "Agent", owner: "Owner", peer: "Peer", system: "Callsign" } as const;
 
 export function LedgerEntry({
   event,
@@ -33,7 +33,9 @@ export function LedgerEntry({
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
             <span className="font-mono">{event.type}</span>
-            {event.actor === "owner" && <Badge>{ACTOR_LABEL.owner}</Badge>}
+            {(event.actor === "owner" || event.actor === "system") && (
+              <Badge>{ACTOR_LABEL[event.actor]}</Badge>
+            )}
           </span>
         </span>
         <time

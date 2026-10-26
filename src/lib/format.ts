@@ -37,6 +37,13 @@ function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+const SECURITY_ALERTS: Record<string, string> = {
+  new_network: "Alert: used from a new network",
+  burst: "Alert: sent many messages in a few minutes",
+  refresh_token_reused: "Alert: a connection's refresh token was reused",
+  code_reused: "Alert: a sign-in code was reused",
+};
+
 export function describeEvent(event: LedgerEvent): string {
   const { data } = event;
   switch (event.type) {
@@ -49,7 +56,27 @@ export function describeEvent(event: LedgerEvent): string {
     case "token.created":
       return `Created token “${text(data.name)}”`;
     case "token.revoked":
-      return `Revoked token “${text(data.name)}”`;
+      switch (data.reason) {
+        case "refresh_token_reused":
+        case "code_reused":
+          return `Disconnected “${text(data.name)}” after its credentials were reused`;
+        case "unfreeze":
+          return `Disconnected “${text(data.name)}” when unfreezing`;
+        default:
+          return `Revoked token “${text(data.name)}”`;
+      }
+    case "agent.frozen":
+      return data.via === "email" || data.via === "telegram"
+        ? `You froze it from ${data.via === "email" ? "an alert email" : "Telegram"}`
+        : "You froze it";
+    case "agent.unfrozen":
+      return "You unfroze it";
+    case "agent.suspended":
+      return "Suspended after reports of abuse";
+    case "agent.unsuspended":
+      return "Suspension lifted";
+    case "security.alert":
+      return SECURITY_ALERTS[text(data.kind)] ?? "Security alert";
     case "request.sent":
       return `Sent a message request to ${text(data.to)}`;
     case "request.received":
@@ -101,9 +128,9 @@ export function describeEvent(event: LedgerEvent): string {
     case "task.updated":
       return `Updated task “${text(data.task)}” to ${text(data.status).replace("_", " ")}`;
     case "notice.received":
-      return text(data.kind) === "follow_up"
-        ? "A follow-up it scheduled came due"
-        : `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
+      if (text(data.kind) === "follow_up") return "A follow-up it scheduled came due";
+      if (text(data.kind) === "agent.unfrozen") return "Told it that it was unfrozen";
+      return `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
     case "follow_up.scheduled":
       return `Scheduled a follow-up: “${text(data.note)}”`;
     case "handoff.created":

@@ -7,10 +7,12 @@ import {
   type AgentInstructions,
   type AgentToken,
   type OwnedAgent,
+  type Sighting,
 } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { Badge, Button, Card, CodeLine, CopyButton, ErrorNote, Input } from "../ui";
 import { useApi } from "./hooks";
+import { SightingLine } from "./security";
 
 type Client = {
   name: string;
@@ -112,48 +114,89 @@ function TeachCard({ agent }: { agent: OwnedAgent }) {
   );
 }
 
-function TokenRow({ token, onRevoke }: { token: AgentToken; onRevoke: () => Promise<void> }) {
+function TokenSightings({ handle, tokenId }: { handle: string; tokenId: string }) {
+  const { data } = useApi<{ sightings: Sighting[] }>(
+    agentPath(handle, `/tokens/${tokenId}/sightings`),
+  );
+  if (!data) return <p className="mt-2 text-xs text-zinc-500">Loading…</p>;
+  return (
+    <ul className="mt-2 grid gap-1.5 border-l border-white/10 pl-3">
+      {data.sightings.map((sighting) => (
+        <li key={`${sighting.ip}-${sighting.firstSeenAt}`} className="flex items-baseline gap-3">
+          <span className="min-w-0 flex-1">
+            <SightingLine sighting={sighting} />
+          </span>
+          <span className="shrink-0 text-xs text-zinc-600">{timeAgo(sighting.lastSeenAt)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TokenRow({
+  handle,
+  token,
+  onRevoke,
+}: {
+  handle: string;
+  token: AgentToken;
+  onRevoke: () => Promise<void>;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const [showAddresses, setShowAddresses] = useState(false);
   const action = token.kind === "oauth" ? "Disconnect" : "Revoke";
   return (
-    <li className="flex items-center gap-4 px-4 py-3 sm:px-5">
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="truncate text-sm text-zinc-100">{token.name}</span>
-          {token.kind === "oauth" && <Badge>Signed in</Badge>}
+    <li className="px-4 py-3 sm:px-5">
+      <div className="flex items-center gap-4">
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-sm text-zinc-100">{token.name}</span>
+            {token.kind === "oauth" && <Badge>Signed in</Badge>}
+          </span>
+          {token.kind === "token" && (
+            <span className="font-mono text-xs text-zinc-500">{token.prefix}…</span>
+          )}
+          {token.usage && <SightingLine sighting={token.usage.last} />}
+          {token.usage && token.usage.addresses > 1 && (
+            <button
+              type="button"
+              onClick={() => setShowAddresses((shown) => !shown)}
+              className="text-xs text-zinc-400 underline decoration-white/20 underline-offset-4 transition hover:text-white"
+            >
+              {showAddresses ? "Hide addresses" : `Used from ${token.usage.addresses} addresses`}
+            </button>
+          )}
         </span>
-        {token.kind === "token" && (
-          <span className="font-mono text-xs text-zinc-500">{token.prefix}…</span>
-        )}
-      </span>
-      <span className="hidden text-right text-xs text-zinc-500 sm:block">
-        Created {timeAgo(token.createdAt)}
-        <br />
-        {token.lastUsedAt ? `Used ${timeAgo(token.lastUsedAt)}` : "Never used"}
-      </span>
-      {confirming ? (
-        <span className="flex gap-2">
-          <Button
-            variant="danger"
-            size="sm"
-            loading={revoking}
-            onClick={() => {
-              setRevoking(true);
-              void onRevoke().finally(() => setRevoking(false));
-            }}
-          >
+        <span className="hidden text-right text-xs text-zinc-500 sm:block">
+          Created {timeAgo(token.createdAt)}
+          <br />
+          {token.lastUsedAt ? `Used ${timeAgo(token.lastUsedAt)}` : "Never used"}
+        </span>
+        {confirming ? (
+          <span className="flex gap-2">
+            <Button
+              variant="danger"
+              size="sm"
+              loading={revoking}
+              onClick={() => {
+                setRevoking(true);
+                void onRevoke().finally(() => setRevoking(false));
+              }}
+            >
+              {action}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
+              Keep
+            </Button>
+          </span>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={() => setConfirming(true)}>
             {action}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-            Keep
-          </Button>
-        </span>
-      ) : (
-        <Button variant="secondary" size="sm" onClick={() => setConfirming(true)}>
-          {action}
-        </Button>
-      )}
+        )}
+      </div>
+      {showAddresses && <TokenSightings handle={handle} tokenId={token.id} />}
     </li>
   );
 }
@@ -216,7 +259,12 @@ export function ConnectPanel({ agent, mcpUrl }: { agent: OwnedAgent; mcpUrl: str
         {data?.tokens.length ? (
           <ul className="divide-y divide-white/5">
             {data.tokens.map((token) => (
-              <TokenRow key={token.id} token={token} onRevoke={() => revoke(token.id)} />
+              <TokenRow
+                key={token.id}
+                handle={agent.handle}
+                token={token}
+                onRevoke={() => revoke(token.id)}
+              />
             ))}
           </ul>
         ) : (

@@ -15,6 +15,7 @@ import { useApi, useLiveEvents } from "./hooks";
 import { LiveNow } from "./live-sessions";
 import { PendingQuestions } from "./pending-questions";
 import { PendingRegistrations } from "./pending-registrations";
+import { SecurityAlerts } from "./security";
 
 function AgentCard({ agent }: { agent: OwnedAgent }) {
   const status = presence(agent.lastSeenAt);
@@ -29,6 +30,7 @@ function AgentCard({ agent }: { agent: OwnedAgent }) {
         <span className="flex items-center gap-2">
           <span className="truncate font-medium text-white">{agent.handle}</span>
           {agent.primary && <Badge tone="signal">Primary</Badge>}
+          {agent.frozenAt && <Badge tone="danger">Frozen</Badge>}
         </span>
         <span className="block truncate text-sm text-zinc-500">
           {product.label} · {status.label}
@@ -55,6 +57,7 @@ export function Overview() {
 
   return (
     <div className="grid gap-10">
+      <SecurityAlerts />
       <PendingQuestions />
       <LiveNow />
       <PendingRegistrations />

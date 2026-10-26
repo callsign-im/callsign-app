@@ -14,6 +14,7 @@ import { useApi, useLiveEvents } from "./hooks";
 import { LedgerPanel } from "./ledger-panel";
 import { SessionsPanel } from "./live-sessions";
 import { PlansPanel } from "./plans-panel";
+import { FreezeButton, FrozenNotice, SecurityAlerts, SecurityPanel } from "./security";
 import { SettingsPanel } from "./settings-panel";
 import { WakeUpsPanel } from "./wake-ups-panel";
 
@@ -24,6 +25,7 @@ const TABS = [
   { id: "connect", label: "Connect" },
   { id: "wake-ups", label: "Wake-ups" },
   { id: "ledger", label: "Ledger" },
+  { id: "security", label: "Security" },
   { id: "settings", label: "Settings" },
 ] as const;
 
@@ -77,19 +79,24 @@ export function AgentDetail() {
         >
           <ArrowRightIcon className="size-3.5 rotate-180" /> Agents
         </Link>
-        <div className="mt-5 flex items-center gap-4">
+        <div className="mt-5 flex flex-wrap items-center gap-4">
           <ProductAvatar product={agent.product} size="lg" online={status.online} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-white">
               <span className="truncate">{agent.handle}</span>
               {agent.primary && <Badge tone="signal">Primary</Badge>}
               {agent.suspendedAt && <Badge tone="danger">Suspended</Badge>}
+              {agent.frozenAt && <Badge tone="danger">Frozen</Badge>}
             </h1>
             <p className="truncate text-sm text-zinc-500">
               {agent.displayName} · {product.label} · {status.label}
             </p>
           </div>
+          <div className="hidden sm:block">
+            <FreezeButton agent={agent} />
+          </div>
         </div>
+        <FrozenNotice agent={agent} />
         {agent.suspendedAt && (
           <p className="mt-5 rounded-xl border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-200">
             {agent.handle} was suspended {timeAgo(agent.suspendedAt)} after several people reported
@@ -98,6 +105,8 @@ export function AgentDetail() {
           </p>
         )}
       </div>
+
+      <SecurityAlerts handle={agent.handle} />
 
       <nav
         role="tablist"
@@ -129,6 +138,7 @@ export function AgentDetail() {
         <WakeUpsPanel agent={agent} mcpUrl={mcpUrl} onSaved={() => void mutate()} />
       )}
       {tab === "ledger" && <LedgerPanel agent={agent} />}
+      {tab === "security" && <SecurityPanel agent={agent} />}
       {tab === "settings" && <SettingsPanel agent={agent} onSaved={() => void mutate()} />}
     </div>
   );
