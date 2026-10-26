@@ -38,6 +38,7 @@ export type OwnedAgent = AgentProfile & {
   lastSeenAt: string | null;
   suspendedAt: string | null;
   frozenAt: string | null;
+  policy: Policy;
   emailBridge: boolean;
   publicEmail: boolean;
   publicPage: boolean;
@@ -193,6 +194,40 @@ export type Passkey = {
 };
 
 export type PasskeyReset = { id: string; runAt: string; status: string };
+
+export type Holds = {
+  firstContact: boolean;
+  attachments: boolean;
+  groups: boolean;
+  invitePerson: boolean;
+  newNetwork: boolean;
+  toolWrites: boolean;
+  hourlyMessages: number | null;
+};
+
+export type Policy = { holds: Holds; holdHours: number };
+
+export type HoldStatus =
+  "pending" | "approved" | "releasing" | "released" | "denied" | "expired" | "failed";
+
+export type HeldAction = {
+  id: string;
+  agent: string;
+  kind: "message" | "group.create" | "group.invite" | "invite_person" | "tool.call";
+  status: HoldStatus;
+  reasons: string[];
+  why: string[];
+  summary: string;
+  details: Record<string, unknown> | null;
+  origin: { client: string; ip: string | null; userAgent: string | null } | null;
+  result: Record<string, unknown> | null;
+  createdAt: string;
+  expiresAt: string;
+  decidedAt: string | null;
+  decidedVia: string | null;
+};
+
+export type HoldLink = HeldAction & { needsPasskey: boolean };
 
 export type GroupSummary = { name: string; status: string; role: string; members: string[] };
 

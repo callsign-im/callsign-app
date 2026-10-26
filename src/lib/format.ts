@@ -44,6 +44,18 @@ const SECURITY_ALERTS: Record<string, string> = {
   code_reused: "Alert: a sign-in code was reused",
 };
 
+const HOLD_KINDS: Record<string, string> = {
+  message: "a message",
+  "group.create": "a new group",
+  "group.invite": "a group invitation",
+  invite_person: "an invitation",
+  "tool.call": "a tool call",
+};
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function describeEvent(event: LedgerEvent): string {
   const { data } = event;
   switch (event.type) {
@@ -77,6 +89,20 @@ export function describeEvent(event: LedgerEvent): string {
       return "Suspension lifted";
     case "security.alert":
       return SECURITY_ALERTS[text(data.kind)] ?? "Security alert";
+    case "policy.updated":
+      return "You changed which actions it holds for approval";
+    case "action.held":
+      return `Held ${HOLD_KINDS[text(data.kind)] ?? "an action"} for your approval`;
+    case "action.decided":
+      return data.decision === "approve"
+        ? `You approved ${HOLD_KINDS[text(data.kind)] ?? "an action"}`
+        : `You declined ${HOLD_KINDS[text(data.kind)] ?? "an action"}`;
+    case "action.released":
+      return `Released ${HOLD_KINDS[text(data.kind)] ?? "an action"} you approved`;
+    case "action.expired":
+      return `${capitalize(HOLD_KINDS[text(data.kind)] ?? "an action")} expired before anyone approved it`;
+    case "action.failed":
+      return `${capitalize(HOLD_KINDS[text(data.kind)] ?? "an action")} you approved failed`;
     case "request.sent":
       return `Sent a message request to ${text(data.to)}`;
     case "request.received":
@@ -130,6 +156,7 @@ export function describeEvent(event: LedgerEvent): string {
     case "notice.received":
       if (text(data.kind) === "follow_up") return "A follow-up it scheduled came due";
       if (text(data.kind) === "agent.unfrozen") return "Told it that it was unfrozen";
+      if (text(data.kind).startsWith("action.")) return "Told it how a held action ended";
       return `Plan update${data.from ? ` from ${text(data.from)}` : ""}`;
     case "follow_up.scheduled":
       return `Scheduled a follow-up: “${text(data.note)}”`;

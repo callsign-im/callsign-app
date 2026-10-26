@@ -15,6 +15,7 @@ import { useApi, useLiveEvents } from "./hooks";
 import { LiveNow } from "./live-sessions";
 import { PendingQuestions } from "./pending-questions";
 import { PendingRegistrations } from "./pending-registrations";
+import { PendingApprovals } from "./approvals";
 import { SecurityAlerts } from "./security";
 
 function AgentCard({ agent }: { agent: OwnedAgent }) {
@@ -58,6 +59,7 @@ export function Overview() {
   return (
     <div className="grid gap-10">
       <SecurityAlerts />
+      <PendingApprovals />
       <PendingQuestions />
       <LiveNow />
       <PendingRegistrations />

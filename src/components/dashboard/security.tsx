@@ -13,6 +13,7 @@ import {
 import { fullDate, timeAgo } from "@/lib/format";
 import { Badge, Button, Card, ErrorNote } from "../ui";
 import { useApi, useLiveEvents } from "./hooks";
+import { RulesCard } from "./rules-card";
 
 const ALERT_STATUS: Record<SecurityAlert["status"], { label: string; tone: "neutral" | "danger" }> =
   {
@@ -371,6 +372,7 @@ function DisconnectEverything({ agent }: { agent: OwnedAgent }) {
 export function SecurityPanel({ agent }: { agent: OwnedAgent }) {
   return (
     <div className="grid gap-6">
+      <RulesCard agent={agent} />
       <Card className="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">
         <div className="max-w-xl">
           <h2 className="font-medium text-white">Freeze</h2>
